@@ -1,10 +1,16 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Dropdown } from "../ui/dropdown/Dropdown";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
+import { getAuthHeaders, getJson } from "../../config/api";
+import type { Me } from "../../pages/UserProfiles";
+
+type ApiEnvelope<T> = { data?: T };
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const [me, setMe] = useState<Me | null>(null);
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -13,6 +19,58 @@ export default function UserDropdown() {
   function closeDropdown() {
     setIsOpen(false);
   }
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await getJson<ApiEnvelope<Me> | Me>("accounts/me/", {
+          headers: getAuthHeaders(),
+        });
+        const next = (res as ApiEnvelope<Me>)?.data ?? (res as Me);
+        if (mounted) setMe(next ?? null);
+      } catch {
+        // ignore (not logged in / token missing)
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const displayName = useMemo(() => {
+    const full = (me?.full_name ?? "").toString().trim();
+    return full || (me?.username as string) || (me?.email as string) || "User";
+  }, [me]);
+
+  const email = useMemo(() => (me?.email as string) || "", [me]);
+
+  const avatarUrl = useMemo(() => {
+    const raw = (me?.avatar as string | undefined) ?? "";
+    const fallback = "/images/user/owner.jpg";
+    if (!raw) return fallback;
+
+    const normalized = raw.startsWith("http")
+      ? raw
+      : raw.startsWith("/")
+        ? raw
+        : `/${raw}`;
+
+    // cache-bust so the new uploaded image shows immediately
+    const v = (me?.updated_at as string | undefined) ?? Date.now().toString();
+    return normalized.includes("?")
+      ? `${normalized}&v=${encodeURIComponent(v)}`
+      : `${normalized}?v=${encodeURIComponent(v)}`;
+  }, [me?.avatar, me?.updated_at]);
+
+  function signOut() {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_refresh");
+    localStorage.removeItem("auth_verified");
+    localStorage.removeItem("auth_email");
+    closeDropdown();
+    navigate("/login", { replace: true });
+  }
   return (
     <div className="relative">
       <button
@@ -20,10 +78,12 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
-          <img src="/images/user/owner.jpg" alt="User" />
+          <img src={avatarUrl} alt="User" />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Musharof</span>
+        <span className="block mr-1 font-medium text-theme-sm">
+          {displayName}
+        </span>
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
@@ -51,10 +111,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Musharof Chowdhury
+            {displayName}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            randomuser@pimjo.com
+            {email}
           </span>
         </div>
 
@@ -135,8 +195,9 @@ export default function UserDropdown() {
             </DropdownItem>
           </li>
         </ul>
-        <Link
-          to="/signin"
+        <DropdownItem
+          tag="button"
+          onClick={signOut}
           className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <svg
@@ -155,7 +216,7 @@ export default function UserDropdown() {
             />
           </svg>
           Sign out
-        </Link>
+        </DropdownItem>
       </Dropdown>
     </div>
   );

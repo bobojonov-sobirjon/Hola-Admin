@@ -18,15 +18,12 @@ export default function AuthLayout({
             <GridShape />
             <div className="flex flex-col items-center max-w-xs">
               <Link to="/" className="block mb-4">
-                <img
-                  width={231}
-                  height={48}
-                  src="/images/logo/auth-logo.svg"
-                  alt="Logo"
-                />
+                <span className="text-3xl font-bold tracking-wide text-white">
+                  Hola
+                </span>
               </Link>
               <p className="text-center text-gray-400 dark:text-white/60">
-                Free and Open-Source Tailwind CSS Admin Dashboard Template
+                A modern ride-hailing platform — built for reliable trips, safer drivers, and faster operations.
               </p>
             </div>
           </div>

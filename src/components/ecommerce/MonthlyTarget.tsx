@@ -5,8 +5,20 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "../../icons";
 
-export default function MonthlyTarget() {
-  const series = [75.55];
+export default function MonthlyTarget({
+  target,
+}: {
+  target?:
+    | {
+        target?: number;
+        revenue_target: number;
+        revenue_current_month: number;
+        progress_percent: number;
+      }
+    | null;
+}) {
+  const progress = Math.max(0, Math.min(100, target?.progress_percent ?? 0));
+  const series = [progress];
   const options: ApexOptions = {
     colors: ["#465FFF"],
     chart: {
@@ -109,13 +121,12 @@ export default function MonthlyTarget() {
             />
           </div>
 
-          <span className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-[95%] rounded-full bg-success-50 px-3 py-1 text-xs font-medium text-success-600 dark:bg-success-500/15 dark:text-success-500">
-            +10%
+          <span className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-[95%] rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+            {progress.toFixed(1)}%
           </span>
         </div>
         <p className="mx-auto mt-10 w-full max-w-[380px] text-center text-sm text-gray-500 sm:text-base">
-          You earn $3287 today, it's higher than last month. Keep up your good
-          work!
+          Revenue progress for current month.
         </p>
       </div>
 
@@ -125,7 +136,7 @@ export default function MonthlyTarget() {
             Target
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            ${new Intl.NumberFormat().format(target?.revenue_target ?? 0)}
             <svg
               width="16"
               height="16"
@@ -150,7 +161,7 @@ export default function MonthlyTarget() {
             Revenue
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            ${new Intl.NumberFormat().format(target?.revenue_current_month ?? 0)}
             <svg
               width="16"
               height="16"
@@ -172,10 +183,10 @@ export default function MonthlyTarget() {
 
         <div>
           <p className="mb-1 text-center text-gray-500 text-theme-xs dark:text-gray-400 sm:text-sm">
-            Today
+            Progress
           </p>
           <p className="flex items-center justify-center gap-1 text-base font-semibold text-gray-800 dark:text-white/90 sm:text-lg">
-            $20K
+            {progress.toFixed(1)}%
             <svg
               width="16"
               height="16"

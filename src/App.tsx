@@ -1,23 +1,43 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
-import SignUp from "./pages/AuthPages/SignUp";
 import NotFound from "./pages/OtherPage/NotFound";
-import UserProfiles from "./pages/UserProfiles";
-import Videos from "./pages/UiElements/Videos";
-import Images from "./pages/UiElements/Images";
-import Alerts from "./pages/UiElements/Alerts";
-import Badges from "./pages/UiElements/Badges";
-import Avatars from "./pages/UiElements/Avatars";
-import Buttons from "./pages/UiElements/Buttons";
-import LineChart from "./pages/Charts/LineChart";
-import BarChart from "./pages/Charts/BarChart";
-import Calendar from "./pages/Calendar";
-import BasicTables from "./pages/Tables/BasicTables";
-import FormElements from "./pages/Forms/FormElements";
-import Blank from "./pages/Blank";
 import AppLayout from "./layout/AppLayout";
 import { ScrollToTop } from "./components/common/ScrollToTop";
 import Home from "./pages/Dashboard/Home";
+import VerifyCode from "./pages/AuthPages/VerifyCode";
+import UserProfiles from "./pages/UserProfiles";
+import RidersList from "./pages/Accounts/RidersList";
+import RiderDetails from "./pages/Accounts/RiderDetails";
+import DriversList from "./pages/Accounts/DriversList";
+import DriverDetails from "./pages/Accounts/DriverDetails";
+import VerificationDriversList from "./pages/Accounts/VerificationDriversList";
+import VerificationDriverDetails from "./pages/Accounts/VerificationDriverDetails";
+import LegalDriverIdentificationList from "./pages/Accounts/LegalDriverIdentificationList";
+import LegalDriverIdentificationDetails from "./pages/Accounts/LegalDriverIdentificationDetails";
+import TermsDriverIdentificationList from "./pages/Accounts/TermsDriverIdentificationList";
+import TermsDriverIdentificationDetails from "./pages/Accounts/TermsDriverIdentificationDetails";
+import RegistrationDriverIdentificationList from "./pages/Accounts/RegistrationDriverIdentificationList";
+import RegistrationDriverIdentificationDetails from "./pages/Accounts/RegistrationDriverIdentificationDetails";
+import UploadDriverIdentificationList from "./pages/Accounts/UploadDriverIdentificationList";
+import UploadDriverIdentificationDetails from "./pages/Accounts/UploadDriverIdentificationDetails";
+import SavedCards from "./pages/Cards/SavedCards";
+import OrdersList from "./pages/Orders/OrdersList";
+import OrderDetails from "./pages/Orders/OrderDetails";
+import RideTypes from "./pages/Orders/02RideTypes";
+import RideTypeDetails from "./pages/Orders/02RideTypeDetails";
+import SurgePricings from "./pages/Orders/07SurgePricings";
+import SurgePricingDetails from "./pages/Orders/07SurgePricingDetails";
+import RatingFeedback from "./pages/Orders/12RatingFeedback";
+import RatingFeedbackDetails from "./pages/Orders/12RatingFeedbackDetails";
+
+function isVerified() {
+  return localStorage.getItem("auth_verified") === "true";
+}
+
+function RequireVerified({ children }: { children: React.ReactNode }) {
+  if (!isVerified()) return <Navigate to="/login" replace />;
+  return children;
+}
 
 export default function App() {
   return (
@@ -27,35 +47,186 @@ export default function App() {
         <Routes>
           {/* Dashboard Layout */}
           <Route element={<AppLayout />}>
-            <Route index path="/" element={<Home />} />
+            <Route
+              index
+              path="/"
+              element={
+                <RequireVerified>
+                  <Home />
+                </RequireVerified>
+              }
+            />
 
-            {/* Others Page */}
-            <Route path="/profile" element={<UserProfiles />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/blank" element={<Blank />} />
+            <Route
+              path="/profile"
+              element={
+                <RequireVerified>
+                  <UserProfiles />
+                </RequireVerified>
+              }
+            />
 
-            {/* Forms */}
-            <Route path="/form-elements" element={<FormElements />} />
+            <Route
+              path="/accounts/riders"
+              element={
+                <RequireVerified>
+                  <RidersList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/accounts/riders/:id"
+              element={
+                <RequireVerified>
+                  <RiderDetails />
+                </RequireVerified>
+              }
+            />
 
-            {/* Tables */}
-            <Route path="/basic-tables" element={<BasicTables />} />
+            <Route
+              path="/accounts/drivers"
+              element={
+                <RequireVerified>
+                  <DriversList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/accounts/drivers/:id"
+              element={
+                <RequireVerified>
+                  <DriverDetails />
+                </RequireVerified>
+              }
+            />
 
-            {/* Ui Elements */}
-            <Route path="/alerts" element={<Alerts />} />
-            <Route path="/avatars" element={<Avatars />} />
-            <Route path="/badge" element={<Badges />} />
-            <Route path="/buttons" element={<Buttons />} />
-            <Route path="/images" element={<Images />} />
-            <Route path="/videos" element={<Videos />} />
+            <Route
+              path="/accounts/verification-drivers"
+              element={
+                <RequireVerified>
+                  <VerificationDriversList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/accounts/verification-drivers/:id"
+              element={
+                <RequireVerified>
+                  <VerificationDriverDetails />
+                </RequireVerified>
+              }
+            />
 
-            {/* Charts */}
-            <Route path="/line-chart" element={<LineChart />} />
-            <Route path="/bar-chart" element={<BarChart />} />
+            <Route
+              path="/accounts/legal-driver-ids"
+              element={
+                <RequireVerified>
+                  <LegalDriverIdentificationList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/accounts/legal-driver-ids/:id"
+              element={
+                <RequireVerified>
+                  <LegalDriverIdentificationDetails />
+                </RequireVerified>
+              }
+            />
+
+            <Route
+              path="/accounts/terms-driver-ids"
+              element={
+                <RequireVerified>
+                  <TermsDriverIdentificationList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/accounts/terms-driver-ids/:id"
+              element={
+                <RequireVerified>
+                  <TermsDriverIdentificationDetails />
+                </RequireVerified>
+              }
+            />
+
+            <Route
+              path="/accounts/registration-drivers"
+              element={
+                <RequireVerified>
+                  <RegistrationDriverIdentificationList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/accounts/registration-drivers/:id"
+              element={
+                <RequireVerified>
+                  <RegistrationDriverIdentificationDetails />
+                </RequireVerified>
+              }
+            />
+
+            <Route
+              path="/accounts/upload-driver-licenses"
+              element={
+                <RequireVerified>
+                  <UploadDriverIdentificationList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/accounts/upload-driver-licenses/:id"
+              element={
+                <RequireVerified>
+                  <UploadDriverIdentificationDetails />
+                </RequireVerified>
+              }
+            />
+
+            <Route
+              path="/cards/saved-cards"
+              element={
+                <RequireVerified>
+                  <SavedCards />
+                </RequireVerified>
+              }
+            />
+
+            <Route path="/orders/orders" element={<RequireVerified><OrdersList /></RequireVerified>} />
+            <Route path="/orders/orders/:id" element={<RequireVerified><OrderDetails /></RequireVerified>} />
+
+            <Route path="/orders/ride-types" element={<RequireVerified><RideTypes /></RequireVerified>} />
+            <Route path="/orders/ride-types/:id" element={<RequireVerified><RideTypeDetails /></RequireVerified>} />
+
+            <Route path="/orders/surge-pricings" element={<RequireVerified><SurgePricings /></RequireVerified>} />
+            <Route path="/orders/surge-pricings/:id" element={<RequireVerified><SurgePricingDetails /></RequireVerified>} />
+
+            <Route path="/orders/rating-feedback" element={<RequireVerified><RatingFeedback /></RequireVerified>} />
+            <Route path="/orders/rating-feedback/:id" element={<RequireVerified><RatingFeedbackDetails /></RequireVerified>} />
+
+            {/*
+              QOLGAN PAGE'LAR HOZIRCHA COMMENT:
+              <Route path="/profile" element={<UserProfiles />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/blank" element={<Blank />} />
+              <Route path="/form-elements" element={<FormElements />} />
+              <Route path="/basic-tables" element={<BasicTables />} />
+              <Route path="/alerts" element={<Alerts />} />
+              <Route path="/avatars" element={<Avatars />} />
+              <Route path="/badge" element={<Badges />} />
+              <Route path="/buttons" element={<Buttons />} />
+              <Route path="/images" element={<Images />} />
+              <Route path="/videos" element={<Videos />} />
+              <Route path="/line-chart" element={<LineChart />} />
+              <Route path="/bar-chart" element={<BarChart />} />
+            */}
           </Route>
 
           {/* Auth Layout */}
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
+          <Route path="/login" element={<SignIn />} />
+          <Route path="/verify-code" element={<VerifyCode />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<NotFound />} />

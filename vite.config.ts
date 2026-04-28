@@ -15,4 +15,23 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    host: true,
+    port: 5173,
+    strictPort: true,
+    proxy: {
+      // avoid CORS in dev by proxying API requests through Vite
+      "/api": {
+        target: "http://31.128.43.149:8040",
+        changeOrigin: true,
+        secure: false,
+      },
+      // serve backend media files in dev
+      "/media": {
+        target: "http://31.128.43.149:8040",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 });
