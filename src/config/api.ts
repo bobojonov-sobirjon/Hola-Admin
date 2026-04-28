@@ -1,5 +1,22 @@
-export const BASE_URL =
-  (import.meta as any).env?.VITE_API_BASE_URL?.toString?.() ?? "/api/v1/";
+function normalizeBaseUrl(url: string) {
+  const u = url.trim();
+  if (!u) return u;
+  return u.endsWith("/") ? u : `${u}/`;
+}
+
+// In development we rely on Vite proxy: "/api/v1/" → backend
+// In production (Vercel) Vite proxy does NOT exist, so we must use an absolute backend URL.
+const ENV_BASE =
+  (import.meta as any).env?.VITE_API_BASE_URL?.toString?.() ??
+  (import.meta as any).env?.VITE_API_BASE_URL ??
+  "";
+
+const DEFAULT_DEV_BASE = "/api/v1/";
+const DEFAULT_PROD_BASE = "http://31.128.43.149:8040/api/v1/";
+
+export const BASE_URL = normalizeBaseUrl(
+  ENV_BASE || ((import.meta as any).env?.DEV ? DEFAULT_DEV_BASE : DEFAULT_PROD_BASE)
+);
 
 type ApiErrorShape =
   | { detail?: string }
