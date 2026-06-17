@@ -29,6 +29,10 @@ import SurgePricings from "./pages/Orders/07SurgePricings";
 import SurgePricingDetails from "./pages/Orders/07SurgePricingDetails";
 import RatingFeedback from "./pages/Orders/12RatingFeedback";
 import RatingFeedbackDetails from "./pages/Orders/12RatingFeedbackDetails";
+import CashoutsList from "./pages/Withdrawals/CashoutsList";
+import CashoutDetails from "./pages/Withdrawals/CashoutDetails";
+import SupportRoomsList from "./pages/Chat/SupportRoomsList";
+import SupportRoomChat from "./pages/Chat/SupportRoomChat";
 
 function isVerified() {
   return localStorage.getItem("auth_verified") === "true";
@@ -205,6 +209,40 @@ export default function App() {
 
             <Route path="/orders/rating-feedback" element={<RequireVerified><RatingFeedback /></RequireVerified>} />
             <Route path="/orders/rating-feedback/:id" element={<RequireVerified><RatingFeedbackDetails /></RequireVerified>} />
+
+            <Route
+              path="/withdrawal/cash-outs"
+              element={
+                <RequireVerified>
+                  <CashoutsList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/withdrawal/cash-outs/:id"
+              element={
+                <RequireVerified>
+                  <CashoutDetails />
+                </RequireVerified>
+              }
+            />
+
+            <Route
+              path="/chat/support/rooms"
+              element={
+                <RequireVerified>
+                  <SupportRoomsList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/chat/support/rooms/:id"
+              element={
+                <RequireVerified>
+                  <SupportRoomChat />
+                </RequireVerified>
+              }
+            />
 
             {/*
               QOLGAN PAGE'LAR HOZIRCHA COMMENT:

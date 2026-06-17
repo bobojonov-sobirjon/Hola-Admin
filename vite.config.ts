@@ -22,13 +22,15 @@ export default defineConfig({
     proxy: {
       // avoid CORS in dev by proxying API requests through Vite
       "/api": {
-        target: "https://apiss.firepole.ru",
+        // target: "https://apiss.firepole.ru",
+        target: "http://localhost:8001",
         changeOrigin: true,
         secure: true,
       },
       // serve backend media files in dev
       "/media": {
-        target: "https://apiss.firepole.ru",
+        // target: "https://apiss.firepole.ru",
+        target: "http://localhost:8001",
         changeOrigin: true,
         secure: true,
       },

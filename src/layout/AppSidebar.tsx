@@ -53,6 +53,16 @@ const navItems: NavItem[] = [
       { name: "04 Rating Feedback", path: "/orders/rating-feedback" },
     ],
   },
+  {
+    icon: <DollarLineIcon />,
+    name: "Withdrawal",
+    subItems: [{ name: "Cash outs", path: "/withdrawal/cash-outs" }],
+  },
+  {
+    icon: <ListIcon />,
+    name: "Chat",
+    subItems: [{ name: "Support rooms", path: "/chat/support/rooms" }],
+  },
   /*
   QOLGANLARI HOZIRCHA COMMENT:
   {

@@ -11,7 +11,8 @@ const ENV_BASE =
   (import.meta as any).env?.VITE_API_BASE_URL ??
   "";
 
-const DEFAULT_BASE = "/api/v1/";
+const IS_DEV = Boolean((import.meta as any).env?.DEV);
+const DEFAULT_BASE = IS_DEV ? "http://127.0.0.1:8001/api/v1/" : "/api/v1/";
 
 export const BASE_URL = normalizeBaseUrl(ENV_BASE || DEFAULT_BASE);
 
@@ -53,7 +54,8 @@ async function requestJson<TResponse>(
   init: JsonRequestInit
 ): Promise<TResponse> {
   const { body, ...rest } = init;
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  const res = await fetch(`${BASE_URL}${cleanPath}`, {
     ...rest,
     headers: {
       Accept: "application/json",
