@@ -6,6 +6,7 @@ import ComponentCard from "../../components/common/ComponentCard";
 import {
   buildPageQuery,
   ListPageSizeSelect,
+  ListSearchBar,
   TablePaginationFooter,
 } from "../../components/common/TablePagination";
 import {
@@ -18,6 +19,7 @@ import {
 import Badge from "../../components/ui/badge/Badge";
 import { getAuthHeaders, getErrorMessage, getJson } from "../../config/api";
 import { type ApiListEnvelope } from "./AdminPanelCommon";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import {
   getDriverOnlineInfo,
   type DriverCurrentLocation,
@@ -55,13 +57,15 @@ export default function DriversList() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput.trim(), 300);
 
-  async function load(currentPage: number, limit: number) {
+  async function load(currentPage: number, limit: number, query: string) {
     setError(null);
     setLoading(true);
     try {
       const res = await getJson<ApiListEnvelope<Driver>>(
-        `admin-panel/drivers/${buildPageQuery(currentPage, limit)}`,
+        `admin-panel/drivers/${buildPageQuery(currentPage, limit, query)}`,
         { headers: getAuthHeaders() }
       );
       setItems(res.data ?? []);
@@ -79,8 +83,8 @@ export default function DriversList() {
   }
 
   useEffect(() => {
-    load(page, pageSize);
-  }, [page, pageSize]);
+    load(page, pageSize, debouncedSearch);
+  }, [page, pageSize, debouncedSearch]);
 
   const countLabel = useMemo(
     () => `${totalCount} driver${totalCount === 1 ? "" : "s"}`,
@@ -92,10 +96,29 @@ export default function DriversList() {
     setPage(1);
   }
 
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    setPage(1);
+  }
+
+  function clearSearch() {
+    setSearchInput("");
+    setPage(1);
+  }
+
   return (
     <>
       <PageMeta title="Drivers" description="Drivers list" />
       <PageBreadcrumb pageTitle="Drivers" />
+
+      <ListSearchBar
+        live
+        value={searchInput}
+        onChange={handleSearchChange}
+        onClear={clearSearch}
+        hasActiveQuery={!!searchInput.trim()}
+        placeholder="Search name, email, phone, ID..."
+      />
 
       <div className="mb-4">
         <ListPageSizeSelect pageSize={pageSize} onChange={changePageSize} />

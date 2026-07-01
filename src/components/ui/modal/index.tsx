@@ -54,7 +54,7 @@ export const Modal: React.FC<ModalProps> = ({
     : "relative w-full rounded-3xl bg-white  dark:bg-gray-900";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
+    <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 sm:p-6">
       {!isFullscreen && (
         <div
           className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
@@ -63,7 +63,8 @@ export const Modal: React.FC<ModalProps> = ({
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses}  ${className}`}
+        style={{ maxHeight: isFullscreen ? undefined : "calc(100dvh - 2rem)" }}
+        className={`${contentClasses} ${className} relative z-10 flex w-full flex-col overflow-hidden`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
@@ -87,7 +88,7 @@ export const Modal: React.FC<ModalProps> = ({
             </svg>
           </button>
         )}
-        <div>{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</div>
       </div>
     </div>
   );

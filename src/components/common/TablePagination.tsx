@@ -139,9 +139,65 @@ export function TablePaginationFooter({
   );
 }
 
-export function buildPageQuery(page: number, pageSize: number) {
+export function buildPageQuery(page: number, pageSize: number, search?: string) {
   const qs = new URLSearchParams();
   qs.set("page", String(page));
   qs.set("page_size", String(clampPageSize(pageSize)));
+  if (search?.trim()) qs.set("search", search.trim());
   return `?${qs.toString()}`;
+}
+
+export function ListSearchBar({
+  value,
+  onChange,
+  onSubmit,
+  onClear,
+  placeholder,
+  hasActiveQuery,
+  live = false,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit?: (e: React.FormEvent) => void;
+  onClear: () => void;
+  placeholder: string;
+  hasActiveQuery: boolean;
+  live?: boolean;
+}) {
+  const wrapperClass = "mb-4 flex flex-wrap items-center gap-3";
+
+  if (live) {
+    return (
+      <div className={wrapperClass}>
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="h-11 min-w-[260px] flex-1 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+        />
+        {hasActiveQuery ? (
+          <Button size="sm" variant="outline" onClick={onClear}>
+            Clear
+          </Button>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <form className={wrapperClass} onSubmit={onSubmit}>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="h-11 min-w-[260px] flex-1 rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+      />
+      <Button size="sm">Search</Button>
+      {hasActiveQuery ? (
+        <Button size="sm" variant="outline" onClick={onClear}>
+          Clear
+        </Button>
+      ) : null}
+    </form>
+  );
 }

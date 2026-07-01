@@ -6,8 +6,10 @@ import ComponentCard from "../../components/common/ComponentCard";
 import {
   buildPageQuery,
   ListPageSizeSelect,
+  ListSearchBar,
   TablePaginationFooter,
 } from "../../components/common/TablePagination";
+import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import {
   Table,
   TableBody,
@@ -41,13 +43,15 @@ export default function RidersList() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearch = useDebouncedValue(searchInput.trim(), 300);
 
-  async function load(currentPage: number, limit: number) {
+  async function load(currentPage: number, limit: number, query: string) {
     setError(null);
     setLoading(true);
     try {
       const res = await getJson<ApiListEnvelope<Rider>>(
-        `admin-panel/riders/${buildPageQuery(currentPage, limit)}`,
+        `admin-panel/riders/${buildPageQuery(currentPage, limit, query)}`,
         { headers: getAuthHeaders() }
       );
       setItems(res.data ?? []);
@@ -65,8 +69,8 @@ export default function RidersList() {
   }
 
   useEffect(() => {
-    load(page, pageSize);
-  }, [page, pageSize]);
+    load(page, pageSize, debouncedSearch);
+  }, [page, pageSize, debouncedSearch]);
 
   const countLabel = useMemo(
     () => `${totalCount} rider${totalCount === 1 ? "" : "s"}`,
@@ -78,10 +82,29 @@ export default function RidersList() {
     setPage(1);
   }
 
+  function handleSearchChange(value: string) {
+    setSearchInput(value);
+    setPage(1);
+  }
+
+  function clearSearch() {
+    setSearchInput("");
+    setPage(1);
+  }
+
   return (
     <>
       <PageMeta title="Riders" description="Riders list" />
       <PageBreadcrumb pageTitle="Riders" />
+
+      <ListSearchBar
+        live
+        value={searchInput}
+        onChange={handleSearchChange}
+        onClear={clearSearch}
+        hasActiveQuery={!!searchInput.trim()}
+        placeholder="Search name, email, phone, ID..."
+      />
 
       <div className="mb-4">
         <ListPageSizeSelect pageSize={pageSize} onChange={changePageSize} />

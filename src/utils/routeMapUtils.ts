@@ -116,9 +116,16 @@ export function haversineKm(a: LatLng, b: LatLng) {
 }
 
 export async function geocodeAddress(address: string): Promise<LatLng | null> {
-  if (!address.trim()) return null;
+  const result = await geocodePlaceQuery(address);
+  return result ? { lat: result.lat, lng: result.lng } : null;
+}
+
+export async function geocodePlaceQuery(
+  query: string
+): Promise<{ lat: number; lng: number; label: string } | null> {
+  if (!query.trim()) return null;
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`;
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query.trim())}`;
     const res = await fetch(url, {
       headers: {
         Accept: "application/json",
@@ -126,12 +133,59 @@ export async function geocodeAddress(address: string): Promise<LatLng | null> {
       },
     });
     if (!res.ok) return null;
-    const data = (await res.json()) as { lat?: string; lon?: string }[];
+    const data = (await res.json()) as {
+      lat?: string;
+      lon?: string;
+      display_name?: string;
+    }[];
     const first = data?.[0];
     const lat = num(first?.lat);
     const lng = num(first?.lon);
     if (lat === null || lng === null) return null;
-    return { lat, lng };
+    const label =
+      first?.display_name?.split(",")[0]?.trim() || query.trim();
+    return { lat, lng, label };
+  } catch {
+    return null;
+  }
+}
+
+export async function reverseGeocodePlaceName(
+  lat: number,
+  lng: number
+): Promise<string | null> {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`;
+    const res = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "en",
+      },
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      address?: {
+        neighbourhood?: string;
+        suburb?: string;
+        city?: string;
+        town?: string;
+        village?: string;
+        county?: string;
+      };
+      display_name?: string;
+    };
+    const a = data.address;
+    const short =
+      a?.neighbourhood ||
+      a?.suburb ||
+      a?.city ||
+      a?.town ||
+      a?.village ||
+      a?.county;
+    if (short) return short;
+    const parts = data.display_name?.split(",").map((s) => s.trim());
+    return parts?.[0] ?? null;
   } catch {
     return null;
   }

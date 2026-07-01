@@ -1,4 +1,9 @@
 import GenericCrudList from "./GenericCrudList";
+import {
+  SURGE_CREATE_INITIAL,
+  SURGE_FORM_FIELDS,
+} from "./surgePricingFields";
+import { formatRadiusMilesDisplay } from "../../utils/surgeRadiusUtils";
 
 export default function SurgePricings() {
   return (
@@ -7,44 +12,27 @@ export default function SurgePricings() {
       breadcrumb="Surge Pricings"
       apiPath="admin-panel/surge-pricings/"
       detailsRouteBase="/orders/surge-pricings"
-      createInitialJson={{
-        name: "Rush hour",
-        multiplier: "1.50",
-        start_time: "17:00:00",
-        end_time: "20:00:00",
-        days_of_week: [0, 1, 2, 3, 4],
-        zone_name: "Downtown",
-        latitude: "39.8046579",
-        longitude: "64.4263534",
-        radius_km: "5.0",
-        min_available_drivers: 1,
-        max_available_drivers: 3,
-        priority: 10,
-        is_active: true,
-      }}
-      createFields={[
-        { key: "name", label: "Name", type: "text" },
-        { key: "multiplier", label: "Multiplier", type: "text" },
-        { key: "start_time", label: "Start time", type: "time" },
-        { key: "end_time", label: "End time", type: "time" },
+      createInitialJson={SURGE_CREATE_INITIAL}
+      createFields={SURGE_FORM_FIELDS}
+      columns={[
+        { header: "Name", render: (it) => String(it.name ?? "—") },
+        { header: "Zone", render: (it) => String(it.zone_name ?? "—") },
         {
-          key: "days_of_week",
-          label: "Days of week",
-          type: "array-number",
-          placeholder: "0,1,2,3,4",
-          hint: "Example: 0,1,2,3,4",
+          header: "Multiplier",
+          render: (it) => (it.multiplier != null ? String(it.multiplier) : "—"),
         },
-        { key: "zone_name", label: "Zone name", type: "text" },
-        { key: "latitude", label: "Latitude", type: "text" },
-        { key: "longitude", label: "Longitude", type: "text" },
-        { key: "radius_km", label: "Radius (km)", type: "text" },
-        { key: "min_available_drivers", label: "Min available drivers", type: "number" },
-        { key: "max_available_drivers", label: "Max available drivers", type: "number" },
-        { key: "priority", label: "Priority", type: "number" },
-        { key: "is_active", label: "Active", type: "checkbox" },
+        {
+          header: "Radius",
+          render: (it) =>
+            it.radius_km != null ? formatRadiusMilesDisplay(String(it.radius_km)) : "—",
+        },
+        {
+          header: "Active",
+          render: (it) =>
+            typeof it.is_active === "boolean" ? (it.is_active ? "Yes" : "No") : "—",
+        },
       ]}
       enableCreate
     />
   );
 }
-
