@@ -288,6 +288,11 @@ export default function DriverDetails() {
             )}
           </ComponentCard>
 
+          <DriverLastLocationMap
+            location={item.current_location}
+            driverName={item.full_name || item.username}
+          />
+
           <ComponentCard title="Personal Information">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Info label="ID" value={String(item.id)} />
@@ -429,11 +434,6 @@ export default function DriverDetails() {
               </div>
             )}
           </ComponentCard>
-
-          <DriverLastLocationMap
-            location={item.current_location}
-            driverName={item.full_name || item.username}
-          />
         </div>
       ) : null}
     </>
