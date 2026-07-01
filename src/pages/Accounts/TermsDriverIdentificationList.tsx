@@ -6,7 +6,7 @@ export default function TermsDriverIdentificationList() {
       title="Terms — driver identification"
       breadcrumb="Terms — driver identification (T&C)"
       listPath="admin-panel/terms-driver-identification/"
-      detailsBasePath="/accounts/terms-driver-ids"
+      detailsBasePath="/site-settings/terms-driver-ids"
     />
   );
 }

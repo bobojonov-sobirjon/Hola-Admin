@@ -3,12 +3,14 @@ import { Link, useLocation } from "react-router";
 
 // Assume these icons are imported from an icon library
 import {
+  BoxIcon,
   ChevronDownIcon,
   DollarLineIcon,
   GridIcon,
   GroupIcon,
   HorizontaLDots,
   ListIcon,
+  PlugInIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 
@@ -31,11 +33,6 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "01. Riders", path: "/accounts/riders" },
       { name: "02. Drivers", path: "/accounts/drivers" },
-      { name: "03. Upload — driver identification (photos & documents)", path: "/accounts/upload-driver-licenses" },
-      { name: "04. Legal — driver identification (agreements)", path: "/accounts/legal-driver-ids" },
-      { name: "05. Terms — driver identification (T&C)", path: "/accounts/terms-driver-ids" },
-      { name: "06. Registration — driver identification (terms)", path: "/accounts/registration-drivers" },
-      { name: "07. Verification — drivers (status / KYC)", path: "/accounts/verification-drivers" },
     ],
   },
   {
@@ -44,19 +41,38 @@ const navItems: NavItem[] = [
     subItems: [{ name: "Saved cards", path: "/cards/saved-cards" }],
   },
   {
+    icon: <BoxIcon />,
+    name: "Vehicle Type",
+    subItems: [{ name: "Vehicle types", path: "/vehicle-types" }],
+  },
+  {
     icon: <ListIcon />,
     name: "Orders",
     subItems: [
-      { name: "01 Orders", path: "/orders/orders" },
-      { name: "02 Ride Types", path: "/orders/ride-types" },
-      { name: "03 Surge Pricings", path: "/orders/surge-pricings" },
-      { name: "04 Rating Feedback", path: "/orders/rating-feedback" },
+      { name: "All Rides", path: "/orders/orders" },
+      { name: "Scheduled Rides", path: "/orders/orders?filter=scheduled" },
+      { name: "Pending Rides", path: "/orders/orders?filter=pending" },
+      { name: "Cancelled Rides", path: "/orders/orders?filter=cancelled" },
+      { name: "Surge Pricings", path: "/orders/surge-pricings" },
+      { name: "Rating Feedback", path: "/orders/rating-feedback" },
     ],
   },
   {
     icon: <DollarLineIcon />,
     name: "Withdrawal",
     subItems: [{ name: "Cash outs", path: "/withdrawal/cash-outs" }],
+  },
+  {
+    icon: <PlugInIcon />,
+    name: "Site settings",
+    subItems: [
+      { name: "01. Upload — driver identification (photos & documents)", path: "/site-settings/upload-driver-licenses" },
+      { name: "02. Legal — driver identification (agreements)", path: "/site-settings/legal-driver-ids" },
+      { name: "03. Terms — driver identification (T&C)", path: "/site-settings/terms-driver-ids" },
+      { name: "04. Registration — driver identification (terms)", path: "/site-settings/registration-drivers" },
+      { name: "05. Verification — drivers (status / KYC)", path: "/site-settings/verification-drivers" },
+      { name: "06. Login legal documents", path: "/site-settings/login-legal-documents" },
+    ],
   },
   {
     icon: <ListIcon />,
@@ -111,8 +127,19 @@ const AppSidebar: React.FC = () => {
 
   // const isActive = (path: string) => location.pathname === path;
   const isActive = useCallback(
-    (path: string) => location.pathname === path,
-    [location.pathname]
+    (path: string) => {
+      if (path.includes("?")) {
+        const [pathname, search] = path.split("?");
+        return location.pathname === pathname && location.search === `?${search}`;
+      }
+      if (path === "/orders/orders") {
+        const params = new URLSearchParams(location.search);
+        const f = params.get("filter");
+        return location.pathname === path && (!f || f === "all");
+      }
+      return location.pathname === path;
+    },
+    [location.pathname, location.search]
   );
 
   useEffect(() => {

@@ -5,7 +5,7 @@ export default function LegalDriverIdentificationDetails() {
     <ActiveTypeDetails
       title="Legal — driver identification"
       breadcrumb="Legal — driver identification"
-      listRoute="/accounts/legal-driver-ids"
+      listRoute="/site-settings/legal-driver-ids"
       apiBasePath="admin-panel/legal-driver-identification"
     />
   );

@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import Badge from "../../components/ui/badge/Badge";
-import { getAuthHeaders, getErrorMessage, getJson } from "../../config/api";
+import Button from "../../components/ui/button/Button";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
+import { useModal } from "../../hooks/useModal";
+import { deleteJson, getAuthHeaders, getErrorMessage, getJson } from "../../config/api";
+import DriverLastLocationMap from "../../components/drivers/DriverLastLocationMap";
+import {
+  getDriverOnlineInfo,
+  type DriverCurrentLocation,
+  type OnlineStatus,
+} from "../../utils/driverAvailability";
 
 type DeviceToken = {
   id: number;
@@ -68,7 +77,9 @@ type Driver = {
   id_identification: string;
   is_verified: boolean;
   is_active: boolean;
-  is_online: boolean;
+  is_online?: boolean;
+  online_status?: OnlineStatus | null;
+  current_location?: DriverCurrentLocation | null;
   created_at: string;
   updated_at: string;
   verification_activation?: string;
@@ -91,9 +102,12 @@ type DriverDetailsResponse = {
 
 export default function DriverDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [item, setItem] = useState<Driver | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { isOpen, openModal, closeModal } = useModal(false);
 
   async function load() {
     if (!id) return;
@@ -117,6 +131,24 @@ export default function DriverDetails() {
     load();
   }, [id]);
 
+  async function confirmDelete() {
+    if (!id || !item) return;
+    setError(null);
+    setDeleting(true);
+    try {
+      await deleteJson<unknown>(`admin-panel/drivers/${id}/`, {
+        headers: getAuthHeaders(),
+      });
+      closeModal();
+      navigate("/accounts/drivers");
+    } catch (e) {
+      closeModal();
+      setError(getErrorMessage(e));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const avatarUrl = useMemo(() => {
     if (!item?.avatar) return "/images/user/owner.jpg";
     const v = item.updated_at ?? Date.now().toString();
@@ -125,19 +157,43 @@ export default function DriverDetails() {
       : `${item.avatar}?v=${encodeURIComponent(v)}`;
   }, [item?.avatar, item?.updated_at]);
 
+  const online = useMemo(
+    () => (item ? getDriverOnlineInfo(item) : { isOnline: false, label: "Offline" }),
+    [item]
+  );
+
   return (
     <>
       <PageMeta title="Driver Details" description="Driver details" />
       <PageBreadcrumb pageTitle="Driver Details" />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Link
           to="/accounts/drivers"
           className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
         >
           ← Back to Drivers
         </Link>
+        {item ? (
+          <Button
+            size="sm"
+            className="ml-auto !bg-error-500 !text-white hover:!bg-error-600 disabled:!bg-error-300 !ring-0"
+            disabled={deleting}
+            onClick={openModal}
+          >
+            Delete driver
+          </Button>
+        ) : null}
       </div>
+
+      <DeleteConfirmModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        onConfirm={() => void confirmDelete()}
+        deleting={deleting}
+        entityLabel="driver"
+        displayName={item?.full_name || item?.email || undefined}
+      />
 
       {error && (
         <div className="mb-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">
@@ -175,10 +231,25 @@ export default function DriverDetails() {
                 <Badge size="sm" color={item.is_active ? "success" : "error"}>
                   {item.is_active ? "Active" : "Inactive"}
                 </Badge>
-                <Badge size="sm" color={item.is_online ? "success" : "warning"}>
-                  {item.is_online ? "Online" : "Offline"}
+                <Badge
+                  size="sm"
+                  variant="solid"
+                  color={online.isOnline ? "success" : "light"}
+                >
+                  {online.label}
                 </Badge>
               </div>
+            </div>
+          </ComponentCard>
+
+          <ComponentCard title="Driver availability" desc="Online status from driver app">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <Info label="Availability" value={online.label} />
+              <Info label="Is online" value={online.isOnline ? "Yes" : "No"} />
+              <Info
+                label="Status"
+                value={item.online_status?.status || (online.isOnline ? "online" : "offline")}
+              />
             </div>
           </ComponentCard>
 
@@ -358,6 +429,11 @@ export default function DriverDetails() {
               </div>
             )}
           </ComponentCard>
+
+          <DriverLastLocationMap
+            location={item.current_location}
+            driverName={item.full_name || item.username}
+          />
         </div>
       ) : null}
     </>

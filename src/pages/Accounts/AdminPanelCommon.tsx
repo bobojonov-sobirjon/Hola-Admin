@@ -4,6 +4,10 @@ export type ApiListEnvelope<T> = {
   status?: string;
   message?: string;
   count?: number;
+  total_count?: number;
+  page?: number;
+  page_size?: number;
+  total_pages?: number;
   data?: T[];
 };
 

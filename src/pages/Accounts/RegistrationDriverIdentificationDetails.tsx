@@ -5,7 +5,7 @@ export default function RegistrationDriverIdentificationDetails() {
     <ActiveTypeDetails
       title="Registration — driver identification"
       breadcrumb="Registration — driver identification (terms)"
-      listRoute="/accounts/registration-drivers"
+      listRoute="/site-settings/registration-drivers"
       apiBasePath="admin-panel/registration-driver-identification"
     />
   );

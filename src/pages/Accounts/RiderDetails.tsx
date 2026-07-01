@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import Badge from "../../components/ui/badge/Badge";
-import { getAuthHeaders, getErrorMessage, getJson } from "../../config/api";
+import Button from "../../components/ui/button/Button";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
+import { useModal } from "../../hooks/useModal";
+import { deleteJson, getAuthHeaders, getErrorMessage, getJson } from "../../config/api";
 
 type RiderDeviceToken = {
   id: number;
@@ -67,9 +70,12 @@ type RiderDetailsResponse = {
 
 export default function RiderDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [item, setItem] = useState<Rider | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const { isOpen, openModal, closeModal } = useModal(false);
 
   async function load() {
     if (!id) return;
@@ -93,6 +99,24 @@ export default function RiderDetails() {
     load();
   }, [id]);
 
+  async function confirmDelete() {
+    if (!id || !item) return;
+    setError(null);
+    setDeleting(true);
+    try {
+      await deleteJson<unknown>(`admin-panel/riders/${id}/`, {
+        headers: getAuthHeaders(),
+      });
+      closeModal();
+      navigate("/accounts/riders");
+    } catch (e) {
+      closeModal();
+      setError(getErrorMessage(e));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   const avatarUrl = useMemo(() => {
     if (!item?.avatar) return "/images/user/owner.jpg";
     const v = item.updated_at ?? Date.now().toString();
@@ -106,14 +130,33 @@ export default function RiderDetails() {
       <PageMeta title="Rider Details" description="Rider details" />
       <PageBreadcrumb pageTitle="Rider Details" />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Link
           to="/accounts/riders"
           className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
         >
           ← Back to Riders
         </Link>
+        {item ? (
+          <Button
+            size="sm"
+            className="ml-auto !bg-error-500 !text-white hover:!bg-error-600 disabled:!bg-error-300 !ring-0"
+            disabled={deleting}
+            onClick={openModal}
+          >
+            Delete rider
+          </Button>
+        ) : null}
       </div>
+
+      <DeleteConfirmModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        onConfirm={() => void confirmDelete()}
+        deleting={deleting}
+        entityLabel="rider"
+        displayName={item?.full_name || item?.email || undefined}
+      />
 
       {error && (
         <div className="mb-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">

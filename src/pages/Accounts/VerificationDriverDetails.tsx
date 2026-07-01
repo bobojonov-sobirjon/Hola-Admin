@@ -99,7 +99,7 @@ export default function VerificationDriverDetails() {
 
       <div className="mb-4">
         <Link
-          to="/accounts/verification-drivers"
+          to="/site-settings/verification-drivers"
           className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
         >
           ← Back to Verification list

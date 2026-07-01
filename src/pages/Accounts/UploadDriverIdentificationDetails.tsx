@@ -107,7 +107,7 @@ export default function UploadDriverIdentificationDetails() {
 
       <div className="mb-4">
         <Link
-          to="/accounts/upload-driver-licenses"
+          to="/site-settings/upload-driver-licenses"
           className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
         >
           ← Back to Upload types

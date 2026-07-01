@@ -142,7 +142,8 @@ export async function postFormData<TResponse>(
   formData: FormData,
   init?: RequestInit
 ): Promise<TResponse> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  const res = await fetch(`${BASE_URL}${cleanPath}`, {
     ...init,
     method: "POST",
     headers: {
@@ -169,13 +170,41 @@ export async function putFormData<TResponse>(
   formData: FormData,
   init?: RequestInit
 ): Promise<TResponse> {
-  const res = await fetch(`${BASE_URL}${path}`, {
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  const res = await fetch(`${BASE_URL}${cleanPath}`, {
     ...init,
     method: "PUT",
     headers: {
       Accept: "application/json",
       ...(init?.headers ?? {}),
       // do NOT set Content-Type here; browser sets multipart boundary
+    },
+    body: formData,
+  });
+
+  let data: unknown = null;
+  try {
+    data = await res.json();
+  } catch {
+    // ignore non-json
+  }
+
+  if (!res.ok) throw data ?? new Error(`HTTP ${res.status}`);
+  return data as TResponse;
+}
+
+export async function patchFormData<TResponse>(
+  path: string,
+  formData: FormData,
+  init?: RequestInit
+): Promise<TResponse> {
+  const cleanPath = path.startsWith("/") ? path.slice(1) : path;
+  const res = await fetch(`${BASE_URL}${cleanPath}`, {
+    ...init,
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      ...(init?.headers ?? {}),
     },
     body: formData,
   });

@@ -5,7 +5,7 @@ export default function TermsDriverIdentificationDetails() {
     <ActiveTypeDetails
       title="Terms — driver identification"
       breadcrumb="Terms — driver identification (T&C)"
-      listRoute="/accounts/terms-driver-ids"
+      listRoute="/site-settings/terms-driver-ids"
       apiBasePath="admin-panel/terms-driver-identification"
     />
   );

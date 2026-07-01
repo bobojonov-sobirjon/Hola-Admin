@@ -1,8 +1,9 @@
-import EcommerceMetrics from "../../components/ecommerce/EcommerceMetrics";
-import MonthlySalesChart from "../../components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "../../components/ecommerce/StatisticsChart";
 import MonthlyTarget from "../../components/ecommerce/MonthlyTarget";
-import RecentOrders from "../../components/ecommerce/RecentOrders";
+import SiteStatistics from "../../components/dashboard/SiteStatistics";
+import RideStatistics from "../../components/dashboard/RideStatistics";
+import RideStatusChart from "../../components/dashboard/RideStatusChart";
+import DriverStatisticsChart from "../../components/dashboard/DriverStatisticsChart";
+import RecentRides from "../../components/dashboard/RecentRides";
 import PageMeta from "../../components/common/PageMeta";
 import { useEffect, useMemo, useState } from "react";
 import Button from "../../components/ui/button/Button";
@@ -12,31 +13,48 @@ import Input from "../../components/form/input/InputField";
 import DatePicker from "../../components/form/date-picker";
 import { getAuthHeaders, getErrorMessage, getJson } from "../../config/api";
 
-type Point = { x: string; y: number };
-type Kpi = { current: number; previous: number; change_percent: number };
 type AnalyticsResponse = {
   filters: { date_from?: string | null; date_to?: string | null; interval: "day" | "month" };
-  kpis: {
-    riders_added: Kpi;
-    drivers_added: Kpi;
-    orders_created: Kpi;
-    orders_completed: Kpi;
-    revenue: Kpi;
-  };
   monthly_target: {
     target?: number;
     revenue_target: number;
     revenue_current_month: number;
     progress_percent: number;
   };
-  charts: { orders: Point[]; riders: Point[]; drivers: Point[] };
-  recent_orders: {
-    id: number;
-    order_code: string;
-    status: string;
-    created_at: string;
-    user_email: string;
-    total_price: number;
+  site_statistics?: {
+    total_riders?: number;
+    total_drivers?: number;
+    vehicle_types?: number;
+    revenue?: { amount?: number; currency?: string; from_completed_rides?: number };
+  };
+  ride_statistics?: {
+    total_rides?: number;
+    cancelled_rides?: number;
+    running_rides?: number;
+    completed_rides?: number;
+    pending_rides?: number;
+  };
+  ride_status_chart?: { x: string; label?: string; cancelled: number; completed: number }[];
+  driver_statistics?: {
+    total_drivers?: number;
+    approved_drivers?: number;
+    pending_drivers?: number;
+    breakdown?: { key: string; label: string; count: number }[];
+  };
+  recent_rides?: {
+    ride_id?: string;
+    order_id: number;
+    order_code?: string;
+    rider_name?: string;
+    driver_name?: string;
+    pickup_address?: string;
+    dropoff_address?: string;
+    created_at?: string;
+    ride_fare?: number;
+    currency?: string;
+    status?: string;
+    status_label?: string;
+    action?: string;
   }[];
 };
 
@@ -99,10 +117,11 @@ export default function Home() {
 
   return (
     <>
-      <PageMeta
-        title="Dashboard"
-        description="Dashboard"
-      />
+      <PageMeta title="Dashboard" description="Dashboard" />
+
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+      </div>
 
       <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex flex-wrap items-end gap-4">
@@ -114,7 +133,7 @@ export default function Home() {
                 { value: "day", label: "day" },
               ]}
               defaultValue={interval}
-              onChange={(v) => setInterval(v as any)}
+              onChange={(v) => setInterval(v as "day" | "month")}
             />
           </div>
           <div className="w-[200px]">
@@ -178,29 +197,26 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12 xl:col-span-7">
-          <EcommerceMetrics kpis={data?.kpis} />
+        <div className="col-span-12 lg:col-span-6">
+          <SiteStatistics data={data?.site_statistics} />
+        </div>
+        <div className="col-span-12 lg:col-span-6">
+          <RideStatistics data={data?.ride_statistics} />
         </div>
 
-        <div className="col-span-12 xl:col-span-5">
+        <div className="col-span-12 lg:col-span-4">
           <MonthlyTarget target={data?.monthly_target} />
         </div>
-
-        <div className="col-span-12">
-          <MonthlySalesChart points={data?.charts.orders ?? []} interval={interval} />
+        <div className="col-span-12 lg:col-span-8">
+          <RideStatusChart points={data?.ride_status_chart ?? []} />
         </div>
 
         <div className="col-span-12">
-          <StatisticsChart
-            interval={interval}
-            riders={data?.charts.riders ?? []}
-            drivers={data?.charts.drivers ?? []}
-            orders={data?.charts.orders ?? []}
-          />
+          <DriverStatisticsChart data={data?.driver_statistics} />
         </div>
 
         <div className="col-span-12">
-          <RecentOrders rows={data?.recent_orders ?? []} />
+          <RecentRides rows={data?.recent_rides ?? []} />
         </div>
       </div>
     </>

@@ -19,6 +19,7 @@ import {
   prettyFieldName,
   type ApiDetailEnvelope,
 } from "./OrdersAdminCommon";
+import OrderRouteMap from "../../components/orders/OrderRouteMap";
 
 type AnyObj = Record<string, unknown>;
 
@@ -215,6 +216,8 @@ export default function OrderDetails() {
               <span className="ml-auto">Updated: {formatDate((order?.updated_at as any) ?? null)}</span>
             </div>
           </ComponentCard>
+
+          <OrderRouteMap orderItems={orderItems} />
 
           {!!orderFields.length && (
             <ComponentCard title="Order" desc="">

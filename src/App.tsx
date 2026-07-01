@@ -20,11 +20,12 @@ import RegistrationDriverIdentificationList from "./pages/Accounts/RegistrationD
 import RegistrationDriverIdentificationDetails from "./pages/Accounts/RegistrationDriverIdentificationDetails";
 import UploadDriverIdentificationList from "./pages/Accounts/UploadDriverIdentificationList";
 import UploadDriverIdentificationDetails from "./pages/Accounts/UploadDriverIdentificationDetails";
+import LoginLegalDocumentsList from "./pages/SiteSettings/LoginLegalDocumentsList";
+import LoginLegalDocumentDetails from "./pages/SiteSettings/LoginLegalDocumentDetails";
+import VehicleTypesList from "./pages/VehicleTypes/VehicleTypesList";
 import SavedCards from "./pages/Cards/SavedCards";
 import OrdersList from "./pages/Orders/OrdersList";
 import OrderDetails from "./pages/Orders/OrderDetails";
-import RideTypes from "./pages/Orders/02RideTypes";
-import RideTypeDetails from "./pages/Orders/02RideTypeDetails";
 import SurgePricings from "./pages/Orders/07SurgePricings";
 import SurgePricingDetails from "./pages/Orders/07SurgePricingDetails";
 import RatingFeedback from "./pages/Orders/12RatingFeedback";
@@ -105,7 +106,7 @@ export default function App() {
             />
 
             <Route
-              path="/accounts/verification-drivers"
+              path="/site-settings/verification-drivers"
               element={
                 <RequireVerified>
                   <VerificationDriversList />
@@ -113,7 +114,7 @@ export default function App() {
               }
             />
             <Route
-              path="/accounts/verification-drivers/:id"
+              path="/site-settings/verification-drivers/:id"
               element={
                 <RequireVerified>
                   <VerificationDriverDetails />
@@ -122,7 +123,7 @@ export default function App() {
             />
 
             <Route
-              path="/accounts/legal-driver-ids"
+              path="/site-settings/legal-driver-ids"
               element={
                 <RequireVerified>
                   <LegalDriverIdentificationList />
@@ -130,7 +131,7 @@ export default function App() {
               }
             />
             <Route
-              path="/accounts/legal-driver-ids/:id"
+              path="/site-settings/legal-driver-ids/:id"
               element={
                 <RequireVerified>
                   <LegalDriverIdentificationDetails />
@@ -139,7 +140,7 @@ export default function App() {
             />
 
             <Route
-              path="/accounts/terms-driver-ids"
+              path="/site-settings/terms-driver-ids"
               element={
                 <RequireVerified>
                   <TermsDriverIdentificationList />
@@ -147,7 +148,7 @@ export default function App() {
               }
             />
             <Route
-              path="/accounts/terms-driver-ids/:id"
+              path="/site-settings/terms-driver-ids/:id"
               element={
                 <RequireVerified>
                   <TermsDriverIdentificationDetails />
@@ -156,7 +157,7 @@ export default function App() {
             />
 
             <Route
-              path="/accounts/registration-drivers"
+              path="/site-settings/registration-drivers"
               element={
                 <RequireVerified>
                   <RegistrationDriverIdentificationList />
@@ -164,7 +165,7 @@ export default function App() {
               }
             />
             <Route
-              path="/accounts/registration-drivers/:id"
+              path="/site-settings/registration-drivers/:id"
               element={
                 <RequireVerified>
                   <RegistrationDriverIdentificationDetails />
@@ -173,7 +174,7 @@ export default function App() {
             />
 
             <Route
-              path="/accounts/upload-driver-licenses"
+              path="/site-settings/upload-driver-licenses"
               element={
                 <RequireVerified>
                   <UploadDriverIdentificationList />
@@ -181,10 +182,36 @@ export default function App() {
               }
             />
             <Route
-              path="/accounts/upload-driver-licenses/:id"
+              path="/site-settings/upload-driver-licenses/:id"
               element={
                 <RequireVerified>
                   <UploadDriverIdentificationDetails />
+                </RequireVerified>
+              }
+            />
+
+            <Route
+              path="/site-settings/login-legal-documents"
+              element={
+                <RequireVerified>
+                  <LoginLegalDocumentsList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/site-settings/login-legal-documents/:id"
+              element={
+                <RequireVerified>
+                  <LoginLegalDocumentDetails />
+                </RequireVerified>
+              }
+            />
+
+            <Route
+              path="/vehicle-types"
+              element={
+                <RequireVerified>
+                  <VehicleTypesList />
                 </RequireVerified>
               }
             />
@@ -200,9 +227,6 @@ export default function App() {
 
             <Route path="/orders/orders" element={<RequireVerified><OrdersList /></RequireVerified>} />
             <Route path="/orders/orders/:id" element={<RequireVerified><OrderDetails /></RequireVerified>} />
-
-            <Route path="/orders/ride-types" element={<RequireVerified><RideTypes /></RequireVerified>} />
-            <Route path="/orders/ride-types/:id" element={<RequireVerified><RideTypeDetails /></RequireVerified>} />
 
             <Route path="/orders/surge-pricings" element={<RequireVerified><SurgePricings /></RequireVerified>} />
             <Route path="/orders/surge-pricings/:id" element={<RequireVerified><SurgePricingDetails /></RequireVerified>} />

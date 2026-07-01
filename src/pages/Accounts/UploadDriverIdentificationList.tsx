@@ -231,7 +231,7 @@ export default function UploadDriverIdentificationList() {
                     <TableRow
                       key={it.id}
                       className="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.04]"
-                      onClick={() => navigate(`/accounts/upload-driver-licenses/${it.id}`)}
+                      onClick={() => navigate(`/site-settings/upload-driver-licenses/${it.id}`)}
                     >
                       <TableCell className="px-5 py-4 sm:px-6 text-start">
                         <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">

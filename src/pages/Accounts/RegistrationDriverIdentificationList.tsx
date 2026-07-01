@@ -6,7 +6,7 @@ export default function RegistrationDriverIdentificationList() {
       title="Registration — driver identification"
       breadcrumb="Registration — driver identification (terms)"
       listPath="admin-panel/registration-driver-identification/"
-      detailsBasePath="/accounts/registration-drivers"
+      detailsBasePath="/site-settings/registration-drivers"
     />
   );
 }

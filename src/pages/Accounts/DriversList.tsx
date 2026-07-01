@@ -4,6 +4,11 @@ import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
 import {
+  buildPageQuery,
+  ListPageSizeSelect,
+  TablePaginationFooter,
+} from "../../components/common/TablePagination";
+import {
   Table,
   TableBody,
   TableCell,
@@ -12,6 +17,12 @@ import {
 } from "../../components/ui/table";
 import Badge from "../../components/ui/badge/Badge";
 import { getAuthHeaders, getErrorMessage, getJson } from "../../config/api";
+import { type ApiListEnvelope } from "./AdminPanelCommon";
+import {
+  getDriverOnlineInfo,
+  type DriverCurrentLocation,
+  type OnlineStatus,
+} from "../../utils/driverAvailability";
 
 type DriverVerification = {
   status?: string;
@@ -29,51 +40,70 @@ type Driver = {
   is_active: boolean;
   verification_activation?: string;
   driver_verification?: DriverVerification | null;
+  online_status?: OnlineStatus | null;
+  current_location?: DriverCurrentLocation | null;
+  is_online?: boolean;
   created_at: string;
-};
-
-type DriversResponse = {
-  status?: string;
-  message?: string;
-  count?: number;
-  data?: Driver[];
 };
 
 export default function DriversList() {
   const navigate = useNavigate();
   const [items, setItems] = useState<Driver[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function load() {
+  async function load(currentPage: number, limit: number) {
     setError(null);
     setLoading(true);
     try {
-      const res = await getJson<DriversResponse>("admin-panel/drivers/", {
-        headers: getAuthHeaders(),
-      });
+      const res = await getJson<ApiListEnvelope<Driver>>(
+        `admin-panel/drivers/${buildPageQuery(currentPage, limit)}`,
+        { headers: getAuthHeaders() }
+      );
       setItems(res.data ?? []);
+      const total = res.total_count ?? res.count ?? res.data?.length ?? 0;
+      setTotalCount(total);
+      setTotalPages(res.total_pages ?? Math.max(1, Math.ceil(total / limit)));
     } catch (e) {
       setError(getErrorMessage(e));
       setItems([]);
+      setTotalCount(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    load();
-  }, []);
+    load(page, pageSize);
+  }, [page, pageSize]);
 
-  const count = useMemo(() => items.length, [items]);
+  const countLabel = useMemo(
+    () => `${totalCount} driver${totalCount === 1 ? "" : "s"}`,
+    [totalCount]
+  );
+
+  function changePageSize(size: number) {
+    setPageSize(size);
+    setPage(1);
+  }
 
   return (
     <>
       <PageMeta title="Drivers" description="Drivers list" />
       <PageBreadcrumb pageTitle="Drivers" />
-      <ComponentCard title={`Drivers (${count})`} desc="Click a row to open details.">
+
+      <div className="mb-4">
+        <ListPageSizeSelect pageSize={pageSize} onChange={changePageSize} />
+      </div>
+
+      <ComponentCard title={`Drivers (${countLabel})`} desc="Click a row to open details.">
         {error && (
-          <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">
+          <div className="mb-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">
             {error}
           </div>
         )}
@@ -85,71 +115,34 @@ export default function DriversList() {
               <Table>
                 <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                   <TableRow>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      #
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Email
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Username
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      First name
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Last name
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      ID Identification
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Email Verified
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Activation
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Active
-                    </TableCell>
-                    <TableCell
-                      isHeader
-                      className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                    >
-                      Created At
-                    </TableCell>
+                    {[
+                      "#",
+                      "Email",
+                      "Username",
+                      "First name",
+                      "Last name",
+                      "ID Identification",
+                      "Email Verified",
+                      "Activation",
+                      "Active",
+                      "Availability",
+                      "Created At",
+                    ].map((h) => (
+                      <TableCell
+                        key={h}
+                        isHeader
+                        className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
+                      >
+                        {h}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 </TableHeader>
 
                 <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-                  {items.map((d, idx) => (
+                  {items.map((d, idx) => {
+                    const online = getDriverOnlineInfo(d);
+                    return (
                     <TableRow
                       key={d.id}
                       className="cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.04]"
@@ -157,7 +150,7 @@ export default function DriversList() {
                     >
                       <TableCell className="px-5 py-4 sm:px-6 text-start">
                         <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {idx + 1}
+                          {(page - 1) * pageSize + idx + 1}
                         </span>
                       </TableCell>
                       <TableCell className="px-5 py-4 sm:px-6 text-start">
@@ -192,34 +185,44 @@ export default function DriversList() {
                           {d.is_active ? "Yes" : "No"}
                         </Badge>
                       </TableCell>
+                      <TableCell className="px-4 py-3 text-start text-theme-sm">
+                        <Badge
+                          size="sm"
+                          variant="solid"
+                          color={online.isOnline ? "success" : "light"}
+                        >
+                          {online.label}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {d.created_at ? new Date(d.created_at).toLocaleString() : "-"}
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                   {!items.length && (
                     <TableRow>
-                      <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      <TableCell
+                        className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400"
+                        colSpan={11}
+                      >
                         No drivers found.
                       </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
-                      <TableCell className="px-4 py-3"> </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
             </div>
+            <TablePaginationFooter
+              page={page}
+              pageSize={pageSize}
+              totalCount={totalCount}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
           </div>
         )}
       </ComponentCard>
     </>
   );
 }
-
