@@ -7,6 +7,7 @@ export default function LegalDriverIdentificationList() {
       breadcrumb="Legal — driver identification"
       listPath="admin-panel/legal-driver-identification/"
       detailsBasePath="/site-settings/legal-driver-ids"
+      deleteEntityLabel="legal identification type"
     />
   );
 }

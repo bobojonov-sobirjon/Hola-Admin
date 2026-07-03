@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import {
   Table,
   TableBody,
@@ -15,7 +16,7 @@ import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
 import { Modal } from "../../components/ui/modal";
 import { useModal } from "../../hooks/useModal";
-import { getAuthHeaders, getErrorMessage, getJson, postFormData } from "../../config/api";
+import { deleteJson, getAuthHeaders, getErrorMessage, getJson, postFormData } from "../../config/api";
 import { type ApiListEnvelope, formatDate } from "./AdminPanelCommon";
 
 type UploadType = {
@@ -35,7 +36,10 @@ export default function UploadDriverIdentificationList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<UploadType | null>(null);
   const { isOpen, openModal, closeModal } = useModal(false);
+  const deleteModal = useModal(false);
 
   const [createTitle, setCreateTitle] = useState("");
   const [createDescription, setCreateDescription] = useState("");
@@ -89,6 +93,26 @@ export default function UploadDriverIdentificationList() {
       setError(getErrorMessage(e));
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deletingItem?.id) return;
+    setError(null);
+    setDeleting(true);
+    try {
+      await deleteJson<unknown>(
+        `admin-panel/upload-driver-identification/${deletingItem.id}/`,
+        { headers: getAuthHeaders() }
+      );
+      deleteModal.closeModal();
+      setDeletingItem(null);
+      await load();
+    } catch (e) {
+      deleteModal.closeModal();
+      setError(getErrorMessage(e));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -201,6 +225,18 @@ export default function UploadDriverIdentificationList() {
         </div>
       </Modal>
 
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => {
+          deleteModal.closeModal();
+          setDeletingItem(null);
+        }}
+        onConfirm={() => void confirmDelete()}
+        deleting={deleting}
+        entityLabel="upload identification type"
+        displayName={deletingItem?.title?.trim() || (deletingItem?.id ? `ID ${deletingItem.id}` : undefined)}
+      />
+
       <ComponentCard title={`Upload types (${count})`} desc="Click a row to open details.">
         {error && (
           <div className="rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">
@@ -224,6 +260,9 @@ export default function UploadDriverIdentificationList() {
                     <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                       Updated
                     </TableCell>
+                    <TableCell isHeader className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
+                      Actions
+                    </TableCell>
                   </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
@@ -244,6 +283,19 @@ export default function UploadDriverIdentificationList() {
                       <TableCell className="px-4 py-3 text-gray-500 text-start text-theme-sm dark:text-gray-400">
                         {formatDate(it.updated_at || it.created_at)}
                       </TableCell>
+                      <TableCell className="px-4 py-3 text-start">
+                        <button
+                          type="button"
+                          className="text-sm font-medium text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingItem(it);
+                            deleteModal.openModal();
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {!items.length && (
@@ -251,6 +303,7 @@ export default function UploadDriverIdentificationList() {
                       <TableCell className="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">
                         No items.
                       </TableCell>
+                      <TableCell className="px-4 py-3"> </TableCell>
                       <TableCell className="px-4 py-3"> </TableCell>
                       <TableCell className="px-4 py-3"> </TableCell>
                     </TableRow>

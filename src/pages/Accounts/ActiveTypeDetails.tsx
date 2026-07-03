@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
-import { getAuthHeaders, getErrorMessage, getJson, patchJson } from "../../config/api";
+import { deleteJson, getAuthHeaders, getErrorMessage, getJson, patchJson } from "../../config/api";
+import { useModal } from "../../hooks/useModal";
 import { type ActiveItem, type ApiDetailEnvelope, YesNoBadge, formatDate } from "./AdminPanelCommon";
 
 export default function ActiveTypeDetails({
@@ -14,16 +16,21 @@ export default function ActiveTypeDetails({
   breadcrumb,
   listRoute,
   apiBasePath,
+  deleteEntityLabel = "item",
 }: {
   title: string;
   breadcrumb: string;
   listRoute: string;
   apiBasePath: string; // e.g. "admin-panel/legal-driver-identification"
+  deleteEntityLabel?: string;
 }) {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const deleteModal = useModal(false);
   const [item, setItem] = useState<ActiveItem | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [titleField, setTitleField] = useState("");
@@ -91,6 +98,21 @@ export default function ActiveTypeDetails({
     }
   }
 
+  async function remove() {
+    if (!id) return;
+    setError(null);
+    setDeleting(true);
+    try {
+      await deleteJson<unknown>(`${apiBasePath}/${id}/`, { headers: getAuthHeaders() });
+      deleteModal.closeModal();
+      navigate(listRoute);
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   useEffect(() => {
     load();
   }, [id, apiBasePath]);
@@ -100,14 +122,33 @@ export default function ActiveTypeDetails({
       <PageMeta title={title} description={breadcrumb} />
       <PageBreadcrumb pageTitle={breadcrumb} />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Link
           to={listRoute}
           className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
         >
           ← Back to list
         </Link>
+        {item ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto !text-error-600 hover:!text-error-700 dark:!text-error-400"
+            onClick={deleteModal.openModal}
+          >
+            Delete
+          </Button>
+        ) : null}
       </div>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={deleteModal.closeModal}
+        onConfirm={() => void remove()}
+        deleting={deleting}
+        entityLabel={deleteEntityLabel}
+        displayName={item?.title?.trim() || (id ? `ID ${id}` : undefined)}
+      />
 
       {error && (
         <div className="mb-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">

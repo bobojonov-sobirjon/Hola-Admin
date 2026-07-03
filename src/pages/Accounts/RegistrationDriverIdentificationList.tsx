@@ -7,6 +7,7 @@ export default function RegistrationDriverIdentificationList() {
       breadcrumb="Registration — driver identification (terms)"
       listPath="admin-panel/registration-driver-identification/"
       detailsBasePath="/site-settings/registration-drivers"
+      deleteEntityLabel="registration identification type"
     />
   );
 }

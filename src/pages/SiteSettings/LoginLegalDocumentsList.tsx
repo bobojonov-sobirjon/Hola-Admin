@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import {
   Table,
   TableBody,
@@ -17,6 +18,7 @@ import { Modal } from "../../components/ui/modal";
 import { useModal } from "../../hooks/useModal";
 import Badge from "../../components/ui/badge/Badge";
 import {
+  deleteJson,
   getAuthHeaders,
   getErrorMessage,
   getJson,
@@ -66,7 +68,10 @@ export default function LoginLegalDocumentsList() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deletingItem, setDeletingItem] = useState<LegalDoc | null>(null);
   const { isOpen, openModal, closeModal } = useModal(false);
+  const deleteModal = useModal(false);
 
   const [documentType, setDocumentType] = useState<"privacy_policy" | "terms_of_service">(
     "privacy_policy"
@@ -143,6 +148,25 @@ export default function LoginLegalDocumentsList() {
       setError(formatApiError(e));
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (!deletingItem?.id) return;
+    setError(null);
+    setDeleting(true);
+    try {
+      await deleteJson<unknown>(`${listPath}${deletingItem.id}/`, {
+        headers: getAuthHeaders(),
+      });
+      deleteModal.closeModal();
+      setDeletingItem(null);
+      await load();
+    } catch (e) {
+      deleteModal.closeModal();
+      setError(formatApiError(e));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -277,6 +301,18 @@ export default function LoginLegalDocumentsList() {
         </div>
       </Modal>
 
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => {
+          deleteModal.closeModal();
+          setDeletingItem(null);
+        }}
+        onConfirm={() => void confirmDelete()}
+        deleting={deleting}
+        entityLabel="legal document"
+        displayName={deletingItem?.title?.trim() || (deletingItem?.id ? `ID ${deletingItem.id}` : undefined)}
+      />
+
       <ComponentCard title={`Login legal documents (${count})`} desc="">
         {error && (
           <div className="mb-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">
@@ -291,7 +327,7 @@ export default function LoginLegalDocumentsList() {
               <Table>
                 <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                   <TableRow>
-                    {["#", "Title", "Type", "Format", "Active", "Updated"].map((h) => (
+                    {["#", "Title", "Type", "Format", "Active", "Updated", "Actions"].map((h) => (
                       <TableCell
                         key={h}
                         isHeader
@@ -329,11 +365,24 @@ export default function LoginLegalDocumentsList() {
                       <TableCell className="px-5 py-4 text-theme-sm text-gray-500 dark:text-gray-400">
                         {formatDate(it.updated_at)}
                       </TableCell>
+                      <TableCell className="px-5 py-4">
+                        <button
+                          type="button"
+                          className="text-sm font-medium text-error-600 hover:text-error-700 dark:text-error-400 dark:hover:text-error-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingItem(it);
+                            deleteModal.openModal();
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {!items.length && (
                     <TableRow>
-                      <TableCell className="px-5 py-4 text-sm text-gray-500" colSpan={6}>
+                      <TableCell className="px-5 py-4 text-sm text-gray-500" colSpan={7}>
                         No documents.
                       </TableCell>
                     </TableRow>

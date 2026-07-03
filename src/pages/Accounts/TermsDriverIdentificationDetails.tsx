@@ -7,6 +7,7 @@ export default function TermsDriverIdentificationDetails() {
       breadcrumb="Terms — driver identification (T&C)"
       listRoute="/site-settings/terms-driver-ids"
       apiBasePath="admin-panel/terms-driver-identification"
+      deleteEntityLabel="terms identification type"
     />
   );
 }

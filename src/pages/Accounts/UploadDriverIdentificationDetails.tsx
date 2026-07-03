@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import PageMeta from "../../components/common/PageMeta";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import ComponentCard from "../../components/common/ComponentCard";
+import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import Badge from "../../components/ui/badge/Badge";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
 import Button from "../../components/ui/button/Button";
 import { Modal } from "../../components/ui/modal";
 import { useModal } from "../../hooks/useModal";
-import { getAuthHeaders, getErrorMessage, getJson, putFormData } from "../../config/api";
+import { deleteJson, getAuthHeaders, getErrorMessage, getJson, putFormData } from "../../config/api";
 import { formatDate, type ApiDetailEnvelope, YesNoBadge } from "./AdminPanelCommon";
 
 type UploadType = {
@@ -35,12 +36,15 @@ function resolveMaybeMediaUrl(url?: string | null) {
 
 export default function UploadDriverIdentificationDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [item, setItem] = useState<UploadType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const { isOpen, openModal, closeModal } = useModal(false);
+  const deleteModal = useModal(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
   const [editTitle, setEditTitle] = useState("");
@@ -96,6 +100,23 @@ export default function UploadDriverIdentificationDetails() {
     }
   }
 
+  async function remove() {
+    if (!id) return;
+    setError(null);
+    setDeleting(true);
+    try {
+      await deleteJson<unknown>(`admin-panel/upload-driver-identification/${id}/`, {
+        headers: getAuthHeaders(),
+      });
+      deleteModal.closeModal();
+      navigate("/site-settings/upload-driver-licenses");
+    } catch (e) {
+      setError(getErrorMessage(e));
+    } finally {
+      setDeleting(false);
+    }
+  }
+
   useEffect(() => {
     load();
   }, [id]);
@@ -105,14 +126,33 @@ export default function UploadDriverIdentificationDetails() {
       <PageMeta title="Upload type details" description="Upload driver identification details" />
       <PageBreadcrumb pageTitle="Upload type details" />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Link
           to="/site-settings/upload-driver-licenses"
           className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
         >
           ← Back to Upload types
         </Link>
+        {item ? (
+          <Button
+            size="sm"
+            variant="outline"
+            className="ml-auto !text-error-600 hover:!text-error-700 dark:!text-error-400"
+            onClick={deleteModal.openModal}
+          >
+            Delete
+          </Button>
+        ) : null}
       </div>
+
+      <DeleteConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={deleteModal.closeModal}
+        onConfirm={() => void remove()}
+        deleting={deleting}
+        entityLabel="upload identification type"
+        displayName={item?.title?.trim() || (id ? `ID ${id}` : undefined)}
+      />
 
       {error && (
         <div className="mb-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">
