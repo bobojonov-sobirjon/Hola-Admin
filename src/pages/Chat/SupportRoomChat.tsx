@@ -101,7 +101,7 @@ function buildSupportWsUrl(roomId: string) {
   const base =
     (env && String(env).trim()) ||
     deriveWsBaseFromApi() ||
-    ((import.meta as any).env?.DEV ? "ws://127.0.0.1:8001" : "wss://apiss.firepole.ru");
+    ((import.meta as any).env?.DEV ? "ws://127.0.0.1:8001" : "wss://api.holadrive.app");
 
   const token = localStorage.getItem("auth_token") || "";
   const url = new URL(`/ws/support/${roomId}/`, base);

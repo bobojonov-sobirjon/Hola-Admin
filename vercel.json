@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/v1/(.*)",
-      "destination": "https://apiss.firepole.ru/api/v1/$1"
+      "destination": "https://api.holadrive.app/api/v1/$1"
     },
     {
       "source": "/(.*)",

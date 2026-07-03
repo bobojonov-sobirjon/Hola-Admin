@@ -11,6 +11,7 @@ import {
   HorizontaLDots,
   ListIcon,
   PlugInIcon,
+  AudioIcon,
 } from "../icons";
 import { useSidebar } from "../context/SidebarContext";
 
@@ -78,6 +79,14 @@ const navItems: NavItem[] = [
     icon: <ListIcon />,
     name: "Chat",
     subItems: [{ name: "Support rooms", path: "/chat/support/rooms" }],
+  },
+  {
+    icon: <AudioIcon />,
+    name: "Support Call",
+    subItems: [
+      { name: "Operator desk", path: "/support-call" },
+      { name: "Call history", path: "/support-call/history" },
+    ],
   },
   /*
   QOLGANLARI HOZIRCHA COMMENT:

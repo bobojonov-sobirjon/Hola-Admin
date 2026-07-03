@@ -34,6 +34,9 @@ import CashoutsList from "./pages/Withdrawals/CashoutsList";
 import CashoutDetails from "./pages/Withdrawals/CashoutDetails";
 import SupportRoomsList from "./pages/Chat/SupportRoomsList";
 import SupportRoomChat from "./pages/Chat/SupportRoomChat";
+import SupportCallDesk from "./pages/SupportCall/SupportCallDesk";
+import VoiceCallsList from "./pages/SupportCall/VoiceCallsList";
+import VoiceCallDetails from "./pages/SupportCall/VoiceCallDetails";
 
 function isVerified() {
   return localStorage.getItem("auth_verified") === "true";
@@ -264,6 +267,31 @@ export default function App() {
               element={
                 <RequireVerified>
                   <SupportRoomChat />
+                </RequireVerified>
+              }
+            />
+
+            <Route
+              path="/support-call"
+              element={
+                <RequireVerified>
+                  <SupportCallDesk />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/support-call/history"
+              element={
+                <RequireVerified>
+                  <VoiceCallsList />
+                </RequireVerified>
+              }
+            />
+            <Route
+              path="/support-call/history/:id"
+              element={
+                <RequireVerified>
+                  <VoiceCallDetails />
                 </RequireVerified>
               }
             />
