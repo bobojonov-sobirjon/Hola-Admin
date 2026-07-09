@@ -9,35 +9,50 @@ export type RideTypeLike = {
   id?: number;
   name?: string | null;
   name_large?: string | null;
+  icon?: string | null;
   is_premium?: boolean;
   is_ev?: boolean;
 };
 
-const ICON_BY_ID: Record<number, string> = {
-  1: iconHola,
-  2: iconHolaLarge,
-  3: iconPremium,
-  4: iconPremiumLarge,
-  5: iconEv,
-  6: iconEvLarge,
+const ICON_BY_SLUG: Record<string, string> = {
+  hola: iconHola,
+  hola_large: iconHolaLarge,
+  premium: iconPremium,
+  premium_large: iconPremiumLarge,
+  hola_ev: iconEv,
+  hola_ev_large: iconEvLarge,
 };
 
-function isLargeVariant(item: RideTypeLike) {
-  return Boolean(String(item.name_large ?? "").trim());
+function normalizeSlug(value?: string | null) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+}
+
+function isLargeVariant(item: RideTypeLike, slug: string) {
+  if (slug.includes("large")) return true;
+  const name = normalizeSlug(item.name);
+  const nameLarge = normalizeSlug(item.name_large);
+  return Boolean(nameLarge && nameLarge !== name && nameLarge.endsWith("_large"));
 }
 
 export function getVehicleTypeIcon(item: RideTypeLike): string {
-  if (item.id && ICON_BY_ID[item.id]) return ICON_BY_ID[item.id];
+  const slug = normalizeSlug(item.icon) || normalizeSlug(item.name);
+  if (slug && ICON_BY_SLUG[slug]) return ICON_BY_SLUG[slug];
 
-  const large = isLargeVariant(item);
+  const large = isLargeVariant(item, slug);
   if (item.is_ev) return large ? iconEvLarge : iconEv;
   if (item.is_premium) return large ? iconPremiumLarge : iconPremium;
   return large ? iconHolaLarge : iconHola;
 }
 
 export function formatVehicleTypeName(item: RideTypeLike) {
-  const primary = item.name?.trim() || "—";
-  const secondary = item.name_large?.trim();
+  const slug = item.name?.trim() || "—";
+  const display = item.name_large?.trim();
+  const primary = display && display.toLowerCase() !== slug.toLowerCase() ? display : slug;
+  const secondary =
+    display && primary !== slug && slug.toLowerCase() !== "string" ? slug : undefined;
   return { primary, secondary };
 }
 
