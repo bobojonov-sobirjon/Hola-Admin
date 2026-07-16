@@ -4,6 +4,7 @@ import { deriveWsBaseFromApi } from "./voiceCallApi";
 export type VoiceCallWsEvent =
   | { type: "connection_established"; message?: string; user_id?: number }
   | { type: "incoming_call"; payload: IncomingCallPayload }
+  | { type: "incoming_support_call"; payload: IncomingCallPayload }
   | { type: "call_accepted"; payload?: Record<string, unknown> }
   | { type: "call_rejected"; payload?: Record<string, unknown> }
   | { type: "call_cancelled"; payload?: Record<string, unknown> }

@@ -6,6 +6,7 @@ import {
   getLocalMicLevel,
   isAgoraConnected,
   isLocalMicMuted,
+  isRemoteAudioActive,
   setLocalMicMuted,
 } from "../../services/agoraVoiceCall";
 
@@ -65,6 +66,7 @@ export default function ActiveCallBar() {
   const [micLevel, setMicLevel] = useState(0);
   const [muted, setMuted] = useState(false);
   const [agoraReady, setAgoraReady] = useState(false);
+  const [remoteAudio, setRemoteAudio] = useState(false);
 
   useEffect(() => {
     if (!ctx?.activeCall) {
@@ -87,6 +89,7 @@ export default function ActiveCallBar() {
       setMicLevel(0);
       setMuted(false);
       setAgoraReady(false);
+      setRemoteAudio(false);
       return;
     }
 
@@ -94,6 +97,7 @@ export default function ActiveCallBar() {
       setAgoraReady(isAgoraConnected());
       setMuted(isLocalMicMuted());
       setMicLevel(getLocalMicLevel());
+      setRemoteAudio(isRemoteAudioActive());
     }, 80);
 
     return () => window.clearInterval(timer);
@@ -125,7 +129,7 @@ export default function ActiveCallBar() {
               <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
             </span>
             <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300/90">
-              {connecting ? "Connecting…" : "Live support call"}
+              {connecting ? "Connecting…" : remoteAudio ? "Caller connected" : "Live support call"}
             </span>
             <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 font-mono text-xs text-white/70">
               {formatDuration(seconds)}

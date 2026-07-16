@@ -143,9 +143,10 @@ export function SupportCallProvider({ children }: { children: React.ReactNode })
 
       const eventCallId = callIdFromPayload(event.payload as Record<string, unknown>);
 
-      if (event.type === "incoming_call") {
+      if (event.type === "incoming_call" || event.type === "incoming_support_call") {
         if (activeCall) return;
         if (eventCallId && isCallDismissed(eventCallId)) return;
+        // UI only — never join Agora from incoming WS payload.
         setIncomingCall(event.payload);
         return;
       }
