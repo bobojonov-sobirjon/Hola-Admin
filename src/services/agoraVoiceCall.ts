@@ -43,3 +43,22 @@ export async function leaveAgoraVoiceCall() {
 export function isAgoraConnected() {
   return Boolean(client);
 }
+
+/** Local mic volume 0–1 while published; 0 if not in a call. */
+export function getLocalMicLevel() {
+  if (!localAudio) return 0;
+  try {
+    return Math.min(1, Math.max(0, localAudio.getVolumeLevel()));
+  } catch {
+    return 0;
+  }
+}
+
+export function isLocalMicMuted() {
+  return Boolean(localAudio && !localAudio.enabled);
+}
+
+export async function setLocalMicMuted(muted: boolean) {
+  if (!localAudio) return;
+  await localAudio.setEnabled(!muted);
+}
