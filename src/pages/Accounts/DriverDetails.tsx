@@ -7,7 +7,14 @@ import Badge from "../../components/ui/badge/Badge";
 import Button from "../../components/ui/button/Button";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import { useModal } from "../../hooks/useModal";
-import { deleteJson, getAuthHeaders, getErrorMessage, getJson } from "../../config/api";
+import Label from "../../components/form/Label";
+import {
+  deleteJson,
+  getAuthHeaders,
+  getErrorMessage,
+  getJson,
+  patchJson,
+} from "../../config/api";
 import DriverLastLocationMap from "../../components/drivers/DriverLastLocationMap";
 import {
   getDriverOnlineInfo,
@@ -46,6 +53,48 @@ type DriverVerification = {
   reviewed_at?: string | null;
   reviewer?: string | null;
 };
+
+type VerificationStatus = "approved" | "rejected" | "in_review" | "not_submitted";
+
+type DriverVerificationPayload = {
+  status?: string;
+  status_display?: string;
+  comment?: string | null;
+  estimated_review_hours?: number | null;
+  reviewed_at?: string | null;
+  reviewer?: string | null;
+  readiness?: Record<string, unknown> | null;
+  identification_ready?: boolean;
+  registration_ready?: boolean;
+  is_ready?: boolean;
+  upload_identifications?: AgreementBlock;
+  legal_agreements?: AgreementBlock;
+  registration_agreements?: AgreementBlock;
+  terms_acceptance?: AgreementBlock;
+  driver_verification?: DriverVerification | null;
+  [key: string]: unknown;
+};
+
+const VERIFICATION_STATUS_OPTIONS: {
+  value: VerificationStatus;
+  label: string;
+  hint: string;
+}[] = [
+  { value: "approved", label: "Approve", hint: "Appda Identification ✅" },
+  { value: "rejected", label: "Reject", hint: "Rad etish" },
+  { value: "in_review", label: "In review", hint: "Ko‘rib chiqilmoqda" },
+  { value: "not_submitted", label: "Reset", hint: "not_submitted" },
+];
+
+function verificationBadgeColor(
+  status?: string | null
+): "success" | "error" | "warning" | "info" | "light" {
+  if (status === "approved") return "success";
+  if (status === "rejected") return "error";
+  if (status === "in_review") return "warning";
+  if (status === "not_submitted") return "light";
+  return "info";
+}
 
 type Vehicle = {
   brand: string;
@@ -100,14 +149,49 @@ type DriverDetailsResponse = {
   data?: Driver;
 };
 
+type VerificationDetailsResponse = {
+  status?: string;
+  message?: string;
+  data?: DriverVerificationPayload;
+};
+
 export default function DriverDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState<Driver | null>(null);
+  const [verification, setVerification] = useState<DriverVerificationPayload | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [savingVerification, setSavingVerification] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("in_review");
+  const [verificationComment, setVerificationComment] = useState("");
   const { isOpen, openModal, closeModal } = useModal(false);
+
+  function applyVerificationPayload(data: DriverVerificationPayload | null) {
+    setVerification(data);
+    const status = (data?.status || data?.driver_verification?.status || "not_submitted") as string;
+    const allowed = VERIFICATION_STATUS_OPTIONS.some((o) => o.value === status);
+    setVerificationStatus((allowed ? status : "in_review") as VerificationStatus);
+    setVerificationComment(
+      String(data?.comment ?? data?.driver_verification?.comment ?? "")
+    );
+  }
+
+  async function loadVerification(driverId: string) {
+    setVerificationError(null);
+    try {
+      const res = await getJson<VerificationDetailsResponse>(
+        `admin-panel/drivers/${driverId}/verification/`,
+        { headers: getAuthHeaders() }
+      );
+      applyVerificationPayload(res.data ?? null);
+    } catch (e) {
+      setVerificationError(getErrorMessage(e));
+      setVerification(null);
+    }
+  }
 
   async function load() {
     if (!id) return;
@@ -119,9 +203,11 @@ export default function DriverDetails() {
         { headers: getAuthHeaders() }
       );
       setItem(res.data ?? null);
+      await loadVerification(id);
     } catch (e) {
       setError(getErrorMessage(e));
       setItem(null);
+      setVerification(null);
     } finally {
       setLoading(false);
     }
@@ -130,6 +216,37 @@ export default function DriverDetails() {
   useEffect(() => {
     load();
   }, [id]);
+
+  async function saveVerification() {
+    if (!id) return;
+    setVerificationError(null);
+    setSavingVerification(true);
+    try {
+      const res = await patchJson<VerificationDetailsResponse>(
+        `admin-panel/drivers/${id}/verification/`,
+        {
+          status: verificationStatus,
+          comment: verificationComment.trim(),
+        },
+        { headers: getAuthHeaders() }
+      );
+      if (res.data) {
+        applyVerificationPayload(res.data);
+      } else {
+        await loadVerification(id);
+      }
+      // Refresh driver summary badges after status change.
+      const driverRes = await getJson<DriverDetailsResponse>(
+        `admin-panel/drivers/${id}/`,
+        { headers: getAuthHeaders() }
+      );
+      setItem(driverRes.data ?? null);
+    } catch (e) {
+      setVerificationError(getErrorMessage(e));
+    } finally {
+      setSavingVerification(false);
+    }
+  }
 
   async function confirmDelete() {
     if (!id || !item) return;
@@ -253,39 +370,161 @@ export default function DriverDetails() {
             </div>
           </ComponentCard>
 
-          <ComponentCard title="Driver Verification">
-            {item.driver_verification ? (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <Info label="Status" value={item.driver_verification.status_display || item.driver_verification.status} />
-                <Info
-                  label="Activation"
-                  value={item.verification_activation || "-"}
-                />
-                <Info label="Comment" value={(item.driver_verification.comment as string) || "-"} />
-                <Info
-                  label="Estimated review (hours)"
-                  value={
-                    item.driver_verification.estimated_review_hours !== null &&
-                    item.driver_verification.estimated_review_hours !== undefined
-                      ? String(item.driver_verification.estimated_review_hours)
-                      : "-"
-                  }
-                />
-                <Info
-                  label="Reviewed at"
-                  value={
-                    item.driver_verification.reviewed_at
-                      ? new Date(item.driver_verification.reviewed_at).toLocaleString()
-                      : "-"
-                  }
-                />
-                <Info label="Reviewer" value={item.driver_verification.reviewer || "-"} />
+          <ComponentCard title="Driver Verification" desc="GET/PATCH admin-panel/drivers/{id}/verification/">
+            {verificationError ? (
+              <div className="mb-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">
+                {verificationError}
               </div>
-            ) : (
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                No verification data.
-              </div>
-            )}
+            ) : null}
+
+            {(() => {
+              const v = verification?.driver_verification || verification;
+              const status = v?.status || item.driver_verification?.status;
+              const statusDisplay =
+                (v as DriverVerification | undefined)?.status_display ||
+                item.driver_verification?.status_display ||
+                status ||
+                "-";
+              const comment =
+                (v as DriverVerification | undefined)?.comment ??
+                item.driver_verification?.comment;
+              const reviewedAt =
+                (v as DriverVerification | undefined)?.reviewed_at ??
+                item.driver_verification?.reviewed_at;
+              const reviewer =
+                (v as DriverVerification | undefined)?.reviewer ??
+                item.driver_verification?.reviewer;
+              const estimated =
+                (v as DriverVerification | undefined)?.estimated_review_hours ??
+                item.driver_verification?.estimated_review_hours;
+
+              return (
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Status</div>
+                      <div className="mt-2">
+                        <Badge size="sm" color={verificationBadgeColor(status)}>
+                          {statusDisplay}
+                        </Badge>
+                      </div>
+                    </div>
+                    <Info
+                      label="Activation"
+                      value={item.verification_activation || "-"}
+                    />
+                    <Info label="Comment" value={(comment as string) || "-"} />
+                    <Info
+                      label="Estimated review (hours)"
+                      value={
+                        estimated !== null && estimated !== undefined
+                          ? String(estimated)
+                          : "-"
+                      }
+                    />
+                    <Info
+                      label="Reviewed at"
+                      value={
+                        reviewedAt ? new Date(String(reviewedAt)).toLocaleString() : "-"
+                      }
+                    />
+                    <Info label="Reviewer" value={(reviewer as string) || "-"} />
+                  </div>
+
+                  {(verification?.readiness ||
+                    verification?.is_ready != null ||
+                    verification?.identification_ready != null ||
+                    verification?.registration_ready != null) && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      {verification?.identification_ready != null ? (
+                        <Info
+                          label="Identification ready"
+                          value={verification.identification_ready ? "Yes" : "No"}
+                        />
+                      ) : null}
+                      {verification?.registration_ready != null ? (
+                        <Info
+                          label="Registration ready"
+                          value={verification.registration_ready ? "Yes" : "No"}
+                        />
+                      ) : null}
+                      {verification?.is_ready != null ? (
+                        <Info
+                          label="Overall ready"
+                          value={verification.is_ready ? "Yes" : "No"}
+                        />
+                      ) : null}
+                      {verification?.readiness
+                        ? Object.entries(verification.readiness)
+                            .filter(([, val]) => val !== null && val !== undefined)
+                            .map(([key, val]) => (
+                              <Info
+                                key={key}
+                                label={prettyKey(key)}
+                                value={formatPrefValue(val)}
+                              />
+                            ))
+                        : null}
+                    </div>
+                  )}
+
+                  <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-800 dark:bg-white/[0.02]">
+                    <div className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">
+                      Update verification status
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div>
+                        <Label>Status</Label>
+                        <select
+                          className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
+                          value={verificationStatus}
+                          onChange={(e) =>
+                            setVerificationStatus(e.target.value as VerificationStatus)
+                          }
+                        >
+                          {VERIFICATION_STATUS_OPTIONS.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label} — {opt.hint}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <Label>Comment</Label>
+                        <input
+                          type="text"
+                          value={verificationComment}
+                          onChange={(e) => setVerificationComment(e.target.value)}
+                          placeholder="e.g. OK"
+                          className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {VERIFICATION_STATUS_OPTIONS.map((opt) => (
+                        <Button
+                          key={opt.value}
+                          size="sm"
+                          variant={verificationStatus === opt.value ? "primary" : "outline"}
+                          disabled={savingVerification}
+                          onClick={() => setVerificationStatus(opt.value)}
+                        >
+                          {opt.label}
+                        </Button>
+                      ))}
+                      <Button
+                        size="sm"
+                        className="ml-auto"
+                        disabled={savingVerification}
+                        onClick={() => void saveVerification()}
+                      >
+                        {savingVerification ? "Saving..." : "Save status"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </ComponentCard>
 
           <DriverLastLocationMap
@@ -397,12 +636,31 @@ export default function DriverDetails() {
             )}
           </ComponentCard>
 
-          <ComponentCard title="Agreements & Identifications">
+          <ComponentCard
+            title="Agreements & Identifications"
+            desc="Identification uploads, legal/registration terms and readiness"
+          >
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <Block label="Upload identifications" block={item.upload_identifications} />
-              <Block label="Legal agreements" block={item.legal_agreements} />
-              <Block label="Registration agreements" block={item.registration_agreements} />
-              <Block label="Terms acceptance" block={item.terms_acceptance} />
+              <Block
+                label="Upload identifications"
+                block={
+                  verification?.upload_identifications || item.upload_identifications
+                }
+              />
+              <Block
+                label="Legal agreements"
+                block={verification?.legal_agreements || item.legal_agreements}
+              />
+              <Block
+                label="Registration agreements"
+                block={
+                  verification?.registration_agreements || item.registration_agreements
+                }
+              />
+              <Block
+                label="Terms acceptance"
+                block={verification?.terms_acceptance || item.terms_acceptance}
+              />
             </div>
           </ComponentCard>
 
