@@ -7,6 +7,7 @@ import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import Badge from "../../components/ui/badge/Badge";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
+import TextArea from "../../components/form/input/TextArea";
 import Button from "../../components/ui/button/Button";
 import { Modal } from "../../components/ui/modal";
 import { useModal } from "../../hooks/useModal";
@@ -271,10 +272,10 @@ export default function UploadDriverIdentificationDetails() {
 
             <div className="md:col-span-2">
               <Label>Description</Label>
-              <Input
-                type="text"
+              <TextArea
+                rows={5}
                 value={editDescription}
-                onChange={(e) => setEditDescription(e.target.value)}
+                onChange={(value) => setEditDescription(value)}
                 placeholder="Description"
               />
             </div>

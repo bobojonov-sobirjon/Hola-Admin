@@ -6,6 +6,7 @@ import ComponentCard from "../../components/common/ComponentCard";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
+import TextArea from "../../components/form/input/TextArea";
 import Button from "../../components/ui/button/Button";
 import { deleteJson, getAuthHeaders, getErrorMessage, getJson, patchJson } from "../../config/api";
 import { useModal } from "../../hooks/useModal";
@@ -189,10 +190,11 @@ export default function ActiveTypeDetails({
               </div>
               <div className="md:col-span-2">
                 <Label>Description</Label>
-                <Input
-                  type="text"
+                <TextArea
+                  rows={5}
                   value={descriptionField}
-                  onChange={(e) => setDescriptionField(e.target.value)}
+                  onChange={(value) => setDescriptionField(value)}
+                  placeholder="Description"
                 />
               </div>
               <div>

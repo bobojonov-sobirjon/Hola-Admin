@@ -13,6 +13,7 @@ import {
 } from "../../components/ui/table";
 import Label from "../../components/form/Label";
 import Input from "../../components/form/input/InputField";
+import TextArea from "../../components/form/input/TextArea";
 import Button from "../../components/ui/button/Button";
 import { Modal } from "../../components/ui/modal";
 import { useModal } from "../../hooks/useModal";
@@ -156,10 +157,10 @@ export default function UploadDriverIdentificationList() {
               </div>
               <div className="md:col-span-2">
                 <Label>Description</Label>
-                <Input
-                  type="text"
+                <TextArea
+                  rows={5}
                   value={createDescription}
-                  onChange={(e) => setCreateDescription(e.target.value)}
+                  onChange={(value) => setCreateDescription(value)}
                   placeholder="Upload a clear photo"
                 />
               </div>
