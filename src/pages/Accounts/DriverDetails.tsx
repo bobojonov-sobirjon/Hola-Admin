@@ -217,6 +217,16 @@ export default function DriverDetails() {
     load();
   }, [id]);
 
+  useEffect(() => {
+    if (loading || !item) return;
+    if (window.location.hash !== "#verification") return;
+    const el = document.getElementById("verification");
+    if (!el) return;
+    window.setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+  }, [loading, item]);
+
   async function saveVerification() {
     if (!id) return;
     setVerificationError(null);
@@ -370,7 +380,11 @@ export default function DriverDetails() {
             </div>
           </ComponentCard>
 
-          <ComponentCard title="Driver Verification" desc="GET/PATCH admin-panel/drivers/{id}/verification/">
+          <ComponentCard
+            id="verification"
+            title="Driver Verification"
+            desc="GET/PATCH admin-panel/drivers/{id}/verification/"
+          >
             {verificationError ? (
               <div className="mb-4 rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-sm text-error-700 dark:border-error-800/60 dark:bg-error-950/30 dark:text-error-300">
                 {verificationError}

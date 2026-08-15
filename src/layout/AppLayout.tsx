@@ -6,6 +6,7 @@ import Backdrop from "./Backdrop";
 import AppSidebar from "./AppSidebar";
 import IncomingCallModal from "../components/supportCall/IncomingCallModal";
 import ActiveCallBar from "../components/supportCall/ActiveCallBar";
+import NotificationToastHost from "../components/header/NotificationToastHost";
 
 const LayoutContent: React.FC = () => {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
@@ -27,6 +28,7 @@ const LayoutContent: React.FC = () => {
         </div>
         <IncomingCallModal />
         <ActiveCallBar />
+        <NotificationToastHost />
       </div>
     </div>
   );
