@@ -8,6 +8,7 @@ import Button from "../../components/ui/button/Button";
 import DeleteConfirmModal from "../../components/common/DeleteConfirmModal";
 import { useModal } from "../../hooks/useModal";
 import Label from "../../components/form/Label";
+import TextArea from "../../components/form/input/TextArea";
 import {
   deleteJson,
   getAuthHeaders,
@@ -445,42 +446,12 @@ export default function DriverDetails() {
                     <Info label="Reviewer" value={(reviewer as string) || "-"} />
                   </div>
 
-                  {(verification?.readiness ||
-                    verification?.is_ready != null ||
-                    verification?.identification_ready != null ||
-                    verification?.registration_ready != null) && (
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      {verification?.identification_ready != null ? (
-                        <Info
-                          label="Identification ready"
-                          value={verification.identification_ready ? "Yes" : "No"}
-                        />
-                      ) : null}
-                      {verification?.registration_ready != null ? (
-                        <Info
-                          label="Registration ready"
-                          value={verification.registration_ready ? "Yes" : "No"}
-                        />
-                      ) : null}
-                      {verification?.is_ready != null ? (
-                        <Info
-                          label="Overall ready"
-                          value={verification.is_ready ? "Yes" : "No"}
-                        />
-                      ) : null}
-                      {verification?.readiness
-                        ? Object.entries(verification.readiness)
-                            .filter(([, val]) => val !== null && val !== undefined)
-                            .map(([key, val]) => (
-                              <Info
-                                key={key}
-                                label={prettyKey(key)}
-                                value={formatPrefValue(val)}
-                              />
-                            ))
-                        : null}
-                    </div>
-                  )}
+                  <ReadinessPanel
+                    readiness={verification?.readiness}
+                    identificationReady={verification?.identification_ready}
+                    registrationReady={verification?.registration_ready}
+                    isReady={verification?.is_ready}
+                  />
 
                   <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-4 dark:border-gray-800 dark:bg-white/[0.02]">
                     <div className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">
@@ -505,12 +476,11 @@ export default function DriverDetails() {
                       </div>
                       <div>
                         <Label>Comment</Label>
-                        <input
-                          type="text"
+                        <TextArea
+                          rows={4}
                           value={verificationComment}
-                          onChange={(e) => setVerificationComment(e.target.value)}
+                          onChange={setVerificationComment}
                           placeholder="e.g. OK"
-                          className="h-11 w-full rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
                         />
                       </div>
                     </div>
@@ -719,6 +689,193 @@ function Info({ label, value }: { label: string; value: string }) {
       <div className="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">
         {value}
       </div>
+    </div>
+  );
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function CheckValue({ value }: { value: unknown }) {
+  if (typeof value === "boolean") {
+    return (
+      <Badge size="sm" color={value ? "success" : "error"}>
+        {value ? "Yes" : "No"}
+      </Badge>
+    );
+  }
+  if (Array.isArray(value)) {
+    const items = value
+      .map((x) => (x === null || x === undefined ? "" : String(x)))
+      .filter(Boolean);
+    if (!items.length) return <span className="text-sm text-gray-500">—</span>;
+    return (
+      <div className="flex flex-wrap gap-1">
+        {items.map((item) => (
+          <Badge key={item} size="sm" color="info">
+            {prettyKey(item)}
+          </Badge>
+        ))}
+      </div>
+    );
+  }
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-sm text-gray-500 dark:text-gray-400">—</span>;
+  }
+  return (
+    <span className="text-sm font-medium text-gray-800 dark:text-white/90">
+      {String(value)}
+    </span>
+  );
+}
+
+function ReadinessPanel({
+  readiness,
+  identificationReady,
+  registrationReady,
+  isReady,
+}: {
+  readiness?: Record<string, unknown> | null;
+  identificationReady?: boolean;
+  registrationReady?: boolean;
+  isReady?: boolean;
+}) {
+  const r = readiness ?? {};
+  const checks = asRecord(r.checks);
+  const details = asRecord(r.details);
+  const readyForRides = r.ready_for_rides;
+  const completion = r.completion_percent ?? r.completionPercent;
+  const extraFlags = [
+    identificationReady != null
+      ? { label: "Identification ready", value: identificationReady }
+      : null,
+    registrationReady != null
+      ? { label: "Registration ready", value: registrationReady }
+      : null,
+    isReady != null ? { label: "Overall ready", value: isReady } : null,
+  ].filter(Boolean) as { label: string; value: boolean }[];
+
+  const hasAnything =
+    extraFlags.length ||
+    readyForRides != null ||
+    completion != null ||
+    checks ||
+    details;
+  if (!hasAnything) return null;
+
+  const skipKeys = new Set(["checks", "details", "ready_for_rides", "completion_percent"]);
+  const otherScalars = Object.entries(r).filter(
+    ([k, v]) => !skipKeys.has(k) && v !== null && v !== undefined && !asRecord(v)
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {readyForRides != null ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+            <div className="text-xs text-gray-500 dark:text-gray-400">Ready for rides</div>
+            <div className="mt-2">
+              <Badge size="sm" color={readyForRides ? "success" : "error"}>
+                {readyForRides ? "Yes" : "No"}
+              </Badge>
+            </div>
+          </div>
+        ) : null}
+        {completion != null ? (
+          <Info label="Completion" value={`${completion}%`} />
+        ) : null}
+        {extraFlags.map((f) => (
+          <div
+            key={f.label}
+            className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]"
+          >
+            <div className="text-xs text-gray-500 dark:text-gray-400">{f.label}</div>
+            <div className="mt-2">
+              <Badge size="sm" color={f.value ? "success" : "warning"}>
+                {f.value ? "Yes" : "No"}
+              </Badge>
+            </div>
+          </div>
+        ))}
+        {otherScalars.map(([k, v]) => (
+          <div
+            key={k}
+            className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]"
+          >
+            <div className="text-xs text-gray-500 dark:text-gray-400">{prettyKey(k)}</div>
+            <div className="mt-2">
+              <CheckValue value={v} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {checks ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+          <div className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">
+            Checks
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(checks).map(([key, val]) => (
+              <div
+                key={key}
+                className="flex items-center justify-between gap-3 rounded-lg border border-gray-100 px-3 py-2 dark:border-white/[0.06]"
+              >
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {prettyKey(key)}
+                </span>
+                <CheckValue value={val} />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {details ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+          <div className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">
+            Details
+          </div>
+          {typeof details.message === "string" && details.message.trim() ? (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200">
+              {details.message}
+            </div>
+          ) : null}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {Object.entries(details)
+              .filter(([key]) => key !== "message")
+              .map(([section, value]) => {
+                const nested = asRecord(value);
+                return (
+                  <div
+                    key={section}
+                    className="rounded-xl border border-gray-100 p-3 dark:border-white/[0.06]"
+                  >
+                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {prettyKey(section)}
+                    </div>
+                    {nested ? (
+                      <div className="space-y-2">
+                        {Object.entries(nested).map(([k, v]) => (
+                          <div key={k} className="flex items-start justify-between gap-3">
+                            <span className="text-sm text-gray-600 dark:text-gray-400">
+                              {prettyKey(k)}
+                            </span>
+                            <CheckValue value={v} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <CheckValue value={value} />
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
