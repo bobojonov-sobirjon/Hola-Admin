@@ -381,38 +381,23 @@ export async function fetchNotifications(params?: {
   if (params?.page) qs.set("page", String(params.page));
   if (params?.page_size) qs.set("page_size", String(params.page_size));
   const q = qs.toString();
-
-  // Prefer /notifications/ (docs), fall back to /notification/
-  const paths = [`notifications/${q ? `?${q}` : ""}`, `notification/${q ? `?${q}` : ""}`];
-  let lastErr: unknown = null;
-  for (const path of paths) {
-    try {
-      const res = await getJson<NotificationsListEnvelope>(path, {
-        headers: getAuthHeaders(),
-      });
-      const arr = Array.isArray(res?.data)
-        ? res.data
-        : Array.isArray((res as any)?.results)
-          ? ((res as any).results as any[])
-          : Array.isArray(res as any)
-            ? (res as any)
-            : [];
-      return arr.map(mapApiNotification).filter(Boolean) as AppNotification[];
-    } catch (e) {
-      lastErr = e;
-    }
-  }
-  throw lastErr ?? new Error("Failed to fetch notifications");
+  // Backend path is singular: /api/v1/notification/
+  const path = `notification/${q ? `?${q}` : ""}`;
+  const res = await getJson<NotificationsListEnvelope>(path, {
+    headers: getAuthHeaders(),
+  });
+  const arr = Array.isArray(res?.data)
+    ? res.data
+    : Array.isArray((res as any)?.results)
+      ? ((res as any).results as any[])
+      : Array.isArray(res as any)
+        ? (res as any)
+        : [];
+  return arr.map(mapApiNotification).filter(Boolean) as AppNotification[];
 }
 
 export async function markNotificationRead(id: number) {
-  try {
-    return await postJson<unknown>(`notifications/${id}/read/`, {}, {
-      headers: getAuthHeaders(),
-    });
-  } catch {
-    return postJson<unknown>(`notification/${id}/read/`, {}, {
-      headers: getAuthHeaders(),
-    });
-  }
+  return postJson<unknown>(`notification/${id}/read/`, {}, {
+    headers: getAuthHeaders(),
+  });
 }
